@@ -1,0 +1,84 @@
+# ==================== FIREBASE ====================
+firebase:
+  service-account-file: tracksound-93a54-firebase-adminsdk-fbsvc-dfadf2c690.json
+
+
+# src/main/resources/application.yml
+spring:
+  application:
+    name: tracksound-backend
+
+  main:
+    banner-mode: off
+
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 200MB
+      max-request-size: 250MB
+
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
+    date-format: yyyy-MM-dd HH:mm:ss
+
+# ==================== SERVER ====================
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+    session:
+      timeout: 30m
+
+# ==================== LOGGING ====================
+logging:
+  level:
+    root: INFO
+    com.tracksound: DEBUG
+    com.google.cloud: WARN
+    org.springframework.web: INFO
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+  file:
+    name: logs/tracksound.log
+
+# ===================================================================
+# PROFILE: dev
+# ===================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    com.tracksound: DEBUG
+    org.springframework.web: DEBUG
+
+server:
+  port: 8080
+
+# ===================================================================
+# PROFILE: prod
+# ===================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    root: WARN
+    com.tracksound: INFO
+    org.springframework: WARN
+
+# Port có thể bị Heroku/Render tự gán → dùng $PORT nếu có
+server:
+  port: ${PORT:8080}

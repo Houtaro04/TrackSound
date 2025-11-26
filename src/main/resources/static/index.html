@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundCloud • Nghe nhạc miễn phí</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #f50;
+      --orange-dark: #d43f00;
+      --black: #333;
+      --grey-100: #f2f2f2;
+      --grey-200: #e5e5e5;
+      --grey-300: #ccc;
+      --grey-600: #999;
+      --grey-800: #666;
+      --grey-900: #333;
+      --white: #fff;
+      --radius: 4px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body, html { margin:0; padding:0; font-family: 'Inter', sans-serif; background:#fff; color:#333; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; display:block; }
+
+    /* Header */
+    header {
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      height:64px;
+      background:#fff;
+      border-bottom:1px solid var(--grey-200);
+      z-index:1000;
+      display:flex;
+      align-items:center;
+    }
+    .header__inner {
+      max-width:1400px;
+      margin:auto;
+      width:100%;
+      padding:0 24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .header__logo a {
+      display:flex;
+      align-items:center;
+      font-weight:900;
+      font-size:28px;
+      color:var(--orange);
+    }
+    .header__logo svg { width:140px; height:40px; fill:currentColor; margin-right:8px; }
+    nav ul { list-style:none; display:flex; gap:32px; margin:0; padding:0; }
+    nav a { font-weight:500; color:var(--black); font-size:15px; }
+    .headerSearch {
+      position:relative;
+      width:420px;
+    }
+    .headerSearch__input {
+      width:100%;
+      padding:10px 44px 10px 16px;
+      border:1px solid var(--grey-300);
+      border-radius:30px;
+      font-size:15px;
+    }
+    .headerSearch__submit {
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
+      cursor:pointer;
+      padding:8px;
+    }
+    .headerSearch__submit svg { width:20px; height:20px; fill:#999; }
+
+    .header__right button {
+      margin-left:12px;
+      padding:8px 20px;
+      border-radius:4px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .sc-button-tertiary { background:none; border:1px solid var(--grey-300); color:#333; }
+    .sc-button-cta { background:var(--orange); color:#fff; border:none; }
+
+    .uploadButton { color:var(--orange); font-weight:600; }
+
+    /* Hero Carousel */
+    .frontHero {
+      position:relative;
+      height:80vh;
+      min-height:600px;
+      background:#000;
+      color:#fff;
+      overflow:hidden;
+    }
+    .frontHero__carousel {
+      display:flex;
+      width:400%;
+      height:100%;
+      transition:transform .6s ease-in-out;
+    }
+    .frontHeroSlide__container {
+      width:25%;
+      height:100%;
+      background-size:cover;
+      background-position:center top;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+      padding:80px 120px;
+    }
+    .frontHeroSlide__title { font-size:72px; font-weight:900; line-height:1; margin-bottom:24px; }
+    .frontHeroSlide__copy { font-size:28px; line-height:1.3; margin-bottom:40px; opacity:0.9; }
+    .sc-button-large { padding:16px 40px; font-size:18px; font-weight:600; border-radius:40px; }
+
+    /* Dots */
+    .frontHero__carouselNav {
+      position:absolute;
+      bottom:40px;
+      left:50%;
+      transform:translateX(-50%);
+      display:flex;
+      gap:12px;
+    }
+    .frontHero__carouselNavDot {
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:rgba(255,255,255,.4);
+      transition:.3s;
+    }
+    .frontHero__carouselNavDot[style*="rgb(255, 255, 255)"] { background:#fff; }
+
+    /* Trending */
+    .trendingTracks { padding:80px 24px; text-align:center; background:#fff; }
+    .trendingTracks__title { font-size:42px; font-weight:300; margin-bottom:60px; }
+    .badgeList { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:60px; }
+    .badgeItem {
+      width:300px;
+      background:#f9f9f9;
+      border-radius:8px;
+      overflow:hidden;
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+    }
+    .badgeItem img { width:100%; height:300px; object-fit:cover; }
+    .badgeItem__info { padding:16px; text-align:left; }
+    .badgeItem__title { font-weight:600; font-size:18px; margin-bottom:8px; }
+    .badgeItem__artist { color:#999; }
+
+    /* Mobile teaser */
+    .frontMobileTeaser {
+      display:flex;
+      align-items:center;
+      padding:120px 24px;
+      background:#f9f9f9;
+    }
+    .frontMobileTeaser__info { flex:1; padding-right:80px; }
+    .frontMobileTeaser__info h2 { font-size:48px; font-weight:300; margin-bottom:24px; }
+    .frontMobileTeaser__links a {
+      display:inline-block;
+      margin-right:16px;
+      background:#000;
+      color:#fff;
+      padding:12px 24px;
+      border-radius:8px;
+      font-weight:600;
+    }
+
+    /* Footer */
+    footer {
+      padding:80px 24px 40px;
+      background:#181818;
+      color:#b3b3b3;
+      font-size:14px;
+    }
+    footer a { color:#b3b3b3; margin-right:16px; }
+    .footer__localeSelector { margin-top:40px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header__inner">
+    <div class="header__logo">
+      <a href="/">
+        <svg viewBox="0 0 143 64" xmlns="http://www.w3.org/2000/svg"><path fill="#f50" d="M308.984235,1169.99251 C308.382505,1180.70295 299.444837,1189.03525 288.718543,1188.88554 L240.008437,1188.88554 C237.777524,1188.86472 235.977065,1187.05577 235.966737,1184.82478 L235.966737,1132.37801 C235.894282,1130.53582 236.962478,1128.83883 238.654849,1128.10753 C238.654849,1128.10753 243.135035,1124.99996 252.572022,1124.99996 C258.337036,1124.99309 263.996267,1126.54789 268.948531,1129.49925 C276.76341,1134.09703 282.29495,1141.75821 284.200228,1150.62285 C285.880958,1150.14737 287.620063,1149.90993 289.36674,1149.91746 C294.659738,1149.88414 299.738952,1152.0036 303.438351,1155.78928 C307.13775,1159.57496 309.139562,1164.70168 308.984235,1169.99251 Z M229.885123,1135.69525 C231.353099,1153.48254 232.420718,1169.70654 229.885123,1187.43663 C229.796699,1188.23857 229.119091,1188.84557 228.312292,1188.84557 C227.505494,1188.84557 226.827885,1188.23857 226.739461,1187.43663 C224.375448,1169.85905 225.404938,1153.33003 226.739461,1135.69525 C226.672943,1135.09199 226.957336,1134.50383 227.471487,1134.18133 C227.985639,1133.85884 228.638946,1133.85884 229.153097,1134.18133 C229.667248,1134.50383 229.951641,1135.09199 229.885123,1135.69525 Z"></path></svg>
+        SoundCloud
+      </a>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="/discover">Home</a></li>
+        <li><a href="/stream">Feed</a></li>
+        <li><a href="/you/library">Library</a></li>
+      </ul>
+    </nav>
+
+    <form class="headerSearch">
+      <input type="search" class="headerSearch__input" placeholder="Search for artists, bands, tracks, podcasts">
+      <button class="headerSearch__submit">
+        <svg viewBox="0 0 24 24"><path d="M10 2.25a7.75 7.75 0 1 0 4.924 13.735l5.546 5.545 1.06-1.06-5.545-5.546A7.75 7.75 0 0 0 10 2.25ZM3.75 10a6.25 6.25 0 1 1 12.5 0 6.25 6.25 0 0 1-12.5 0Z" fill="currentColor"></path></svg>
+      </button>
+    </form>
+
+    <div class="header__right">
+      <button class="sc-button-tertiary">Sign in</button>
+      <button class="sc-button-cta">Create account</button>
+      <a href="/upload" class="uploadButton">Upload</a>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="frontHero">
+  <div class="frontHero__carousel" id="carousel" style="transform:translateX(-25%)">
+    <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-artist-fan-534fb484.jpeg')">
+      <h2 class="frontHeroSlide__title">Discover.<br>Get Discovered.</h2>
+      <p class="frontHeroSlide__copy">Discover your next obsession, or become someone else’s.<br>SoundCloud is the only community where fans and artists come together to discover and connect through music.</p>
+      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Get Started</button>
+    </div>
+    <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-artist-db39c288.jpeg')">
+      <h2 class="frontHeroSlide__title">It all starts with<br>an upload.</h2>
+      <p class="frontHeroSlide__copy">From bedrooms and broom closets to studios and stadiums, SoundCloud is where you define what’s next in music. Just hit upload.</p>
+      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Upload</button>
+    </div>
+    <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-fan-e6ab2de1.jpeg')">
+      <h2 class="frontHeroSlide__title">Where every music scene lives.</h2>
+      <p class="frontHeroSlide__copy">Discover 400 million songs, remixes and DJ sets: every chart-topping track you can find elsewhere, and millions more you can’t find anywhere else.</p>
+      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Explore Go+</button>
+    </div>
+    <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-artist-fan-534fb484.jpeg')"></div>
+  </div>
+
+  <div class="frontHero__carouselNav">
+    <div class="frontHero__carouselNavDot"></div>
+    <div class="frontHero__carouselNavDot" style="background:#fff"></div>
+    <div class="frontHero__carouselNavDot"></div>
+  </div>
+</section>
+
+<!-- Trending Tracks (demo 6 items) -->
+<section class="trendingTracks">
+  <h2 class="trendingTracks__title">Hear what’s trending for free in the SoundCloud community</h2>
+  <div class="badgeList">
+    <!-- Bạn có thể thêm 6-9 thẻ .badgeItem ở đây với ảnh + tên bài -->
+    <div class="badgeItem">
+      <img src="https://i.scdn.co/image/ab67616d0000b273e8f709a1f8f2c4e0e2f68d1f" alt="">
+      <div class="badgeItem__info">
+        <div class="badgeItem__title">To The Moon</div>
+        <div class="badgeItem__artist">Jnr Choi</div>
+      </div>
+    </div>
+    <!-- Lặp lại 5 lần nữa... -->
+  </div>
+  <a href="/charts" class="sc-button sc-button-large sc-button-cta sc-button-primary">Explore trending playlists</a>
+</section>
+
+<!-- Mobile App Teaser -->
+<section class="frontMobileTeaser">
+  <div class="frontMobileTeaser__info">
+    <h2>Never stop listening</h2>
+    <p class="sc-text-h3">SoundCloud is available on Web, iOS, Android, Sonos, Chromecast, and Xbox One.</p>
+    <div class="frontMobileTeaser__links">
+      <a href="#">Download on the App Store</a>
+      <a href="#">Get it on Google Play</a>
+    </div>
+  </div>
+  <div class="frontMobileTeaser__devices">
+    <!-- Ảnh điện thoại (có thể thay bằng hình thật) -->
+    <img src="https://a-v2.sndcdn.com/assets/images/iphone-12-pro-max@2x-8d6fe14c.png" alt="">
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div style="max-width:1400px;margin:auto;">
+    <div>
+      Directory · About us · Artist Resources · Jobs · Developers · Help · Legal · Privacy · Cookie Policy · Imprint · Charts
+    </div>
+    <div class="footer__localeSelector">
+      Language: <strong>English (US)</strong>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Simple carousel auto-play (mỗi 6 giây)
+  const carousel = document.getElementById('carousel');
+  let index = 1;
+  setInterval(() => {
+    index = (index + 1) % 3;
+    carousel.style.transform = `translateX(-${index * 25}%)`;
+  }, 6000);
+</script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyBKfbTKlSTuPgqVTEVQEvZ0XNZzTwu2AKw",
+    authDomain: "tracksound-93a54.firebaseapp.com",
+    projectId: "tracksound-93a54",
+    storageBucket: "tracksound-93a54.firebasestorage.app",
+    messagingSenderId: "867088273750",
+    appId: "1:867088273750:web:3e630ac9a980b8040b46f7",
+    measurementId: "G-ZV0CX6X36K"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+<script>
+  // Gọi API khi trang vừa load
+  window.addEventListener('DOMContentLoaded', () => {
+    fetch('/api/firestore/create?docId=test1&message=Hello')
+      .then(response => response.text())
+      .then(data => {
+        console.log('API response:', data);
+      })
+      .catch(error => console.error('Error:', error));
+  });
+</script>
+
+</body>
+</html>
