@@ -1,13 +1,21 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.response.UserInfoResponse;
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+import java.util.concurrent.ExecutionException;
+
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+    private final UserRepository userRepository;
 
     @Override
     public UserInfoResponse loginWithGoogle(String idToken) throws FirebaseAuthException {
@@ -20,8 +28,27 @@ public class AuthServiceImpl implements AuthService {
         String name = decodedToken.getName();
         String picture = decodedToken.getPicture();
 
-        // Tại đây, bạn có thể thêm logic để lưu/cập nhật người dùng vào database của mình
-        // Ví dụ: userRepository.findByFirebaseUid(uid).orElseGet(() -> userRepository.save(new User(...)));
+        // Kiểm tra xem người dùng đã tồn tại trong Firestore chưa
+        try {
+            userRepository.findById(uid).orElseGet(() -> {
+                // Nếu chưa tồn tại, tạo người dùng mới (đây là logic cho "Create Account")
+                User newUser = User.builder()
+                        .firebaseUid(uid)
+                        .email(email)
+                        .name(name)
+                        .picture(picture)
+                        .createdAt(new Date())
+                        .build();
+                userRepository.save(newUser);
+                return newUser;
+            });
+        } catch (ExecutionException | InterruptedException e) {
+            // Xử lý lỗi khi giao tiếp với Firestore
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Error while checking or creating user in Firestore", e);
+        }
+
+        // Nếu đã tồn tại hoặc vừa tạo xong, trả về thông tin (đây là logic cho "Sign In")
 
         return UserInfoResponse.builder()
                 .uid(uid)
