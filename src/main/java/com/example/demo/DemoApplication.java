@@ -19,9 +19,6 @@ public class DemoApplication {
         System.out.println("==========================================");
         System.out.println("Application started! Test links in browser:");
         System.out.println("Homepage:   http://localhost:8080/api/");
-        System.out.println("Create doc: http://localhost:8080/api/firestore/create?docId=test1&message=Hello");
-        System.out.println("Read doc:   http://localhost:8080/api/firestore/read?docId=test1");
-        System.out.println("Delete doc: http://localhost:8080/api/firestore/delete?docId=test1");
         System.out.println("==========================================");
     }
 }
