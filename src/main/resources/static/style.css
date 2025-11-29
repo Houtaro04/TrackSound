@@ -375,3 +375,39 @@ nav ul {
   transform: translateY(1px); /* Nút lún xuống nhẹ tạo cảm giác bấm thật */
   box-shadow: 0 2px 5px rgba(255, 69, 0, 0.3); /* Bóng đổ nhỏ lại */
 }
+
+/* Style cho Modal Upload */
+.upload-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); /* Nền tối mờ */
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px); /* Làm mờ nền sau */
+}
+
+.upload-modal__content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+.sc-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

@@ -1,91 +1,140 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Track;
-import com.example.demo.repository.TrackRepository;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
+import com.google.firebase.cloud.FirestoreClient; // Vẫn dùng Firestore để lưu thông tin bài hát (text), chỉ bỏ Storage (file)
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.google.firebase.cloud.FirestoreClient;
+import jakarta.annotation.PostConstruct;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class TrackServiceImpl implements TrackService {
 
-    private final TrackRepository trackRepository;
-    private static final String BUCKET_NAME = "tracksound-93a54.appspot.com";
-    private static final String DOWNLOAD_URL_FORMAT = "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media";
+    // Đường dẫn thư mục lưu file (Nằm ngay trong thư mục project của bạn)
+    private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
+
+    // Constructor: Tạo thư mục uploads nếu chưa có
+    @PostConstruct // Hàm này sẽ tự chạy ngay sau khi class được tạo
+    public void init() {
+        try {
+            Files.createDirectories(this.fileStorageLocation);
+        } catch (Exception ex) {
+            throw new RuntimeException("Không thể tạo thư mục upload.", ex);
+        }
+    }
 
     @Override
-    public Track uploadTrack(MultipartFile file, String artistId, String artistName) throws IOException, ExecutionException, InterruptedException {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Cannot upload empty file.");
+    public Track uploadTrack(MultipartFile file, MultipartFile coverImage, String title, String artistId, String artistName) throws IOException, ExecutionException, InterruptedException {
+        
+        // --- 1. LƯU FILE NHẠC VÀO Ổ CỨNG ---
+        String audioFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename(); // Tạo tên file không trùng
+        Path targetAudioLocation = this.fileStorageLocation.resolve(audioFileName);
+        Files.copy(file.getInputStream(), targetAudioLocation, StandardCopyOption.REPLACE_EXISTING);
+
+        // Tạo đường dẫn để truy cập (http://localhost:8080/uploads/...)
+        String fileUrl = "http://localhost:8080/api/uploads/" + audioFileName;
+
+        // --- 2. LƯU ẢNH BÌA VÀO Ổ CỨNG (NẾU CÓ) ---
+        String coverUrl = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"; // Ảnh mặc định
+        
+        if (coverImage != null && !coverImage.isEmpty()) {
+            String imageFileName = UUID.randomUUID().toString() + "_" + coverImage.getOriginalFilename();
+            Path targetImageLocation = this.fileStorageLocation.resolve(imageFileName);
+            Files.copy(coverImage.getInputStream(), targetImageLocation, StandardCopyOption.REPLACE_EXISTING);
+            
+            coverUrl = "http://localhost:8080/api/uploads/" + imageFileName;
         }
 
-        // 1. Upload file to Firebase Storage
-        Storage storage = StorageOptions.getDefaultInstance().getService();
-        String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
-
-        BlobId blobId = BlobId.of(BUCKET_NAME, fileName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(file.getContentType()).build();
-
-        storage.create(blobInfo, file.getBytes());
-        String fileUrl = String.format(DOWNLOAD_URL_FORMAT, BUCKET_NAME, URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-
-        // 2. Create Track object
+        // --- 3. LƯU THÔNG TIN VÀO FIREBASE FIRESTORE (Database Text vẫn dùng Firebase vì nó miễn phí và nhanh) ---
+        // Nếu bạn muốn bỏ hoàn toàn Firebase thì phải cài MySQL/MongoDB, nhưng tôi khuyên nên giữ Firestore cho phần Text.
         Track track = new Track();
-        track.setTitle(file.getOriginalFilename()); // Tạm lấy tên file làm title
+        String trackId = UUID.randomUUID().toString();
+        
+        track.setId(trackId);
+        track.setTitle(title);
         track.setArtistId(artistId);
         track.setArtistName(artistName);
         track.setFileUrl(fileUrl);
-        track.setUploadedAt(new Date());
+        track.setCoverUrl(coverUrl); 
 
-        // 3. Save track info to Firestore
-        String savedId = trackRepository.save(track);
-        track.setId(savedId);
+        Firestore db = FirestoreClient.getFirestore();
+        db.collection("tracks").document(trackId).set(track);
 
         return track;
     }
 
+    // --- CÁC HÀM GET DỮ LIỆU (GIỮ NGUYÊN) ---
     @Override
     public List<Track> getAllTracks() throws ExecutionException, InterruptedException {
-        // 1. Lấy instance của Firestore
         Firestore db = FirestoreClient.getFirestore();
-        
-        // 2. Trỏ vào collection "tracks" (nơi bạn lưu thông tin bài hát)
-        CollectionReference tracksCollection = db.collection("tracks");
-        
-        // 3. Lấy toàn bộ dữ liệu (Asynchronous)
-        ApiFuture<QuerySnapshot> future = tracksCollection.get();
-        
-        // 4. Chờ kết quả trả về
+        ApiFuture<QuerySnapshot> future = db.collection("tracks").get();
         List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-        
-        // 5. Chuyển đổi từ Document Firestore sang Java Object (Track)
         List<Track> trackList = new ArrayList<>();
         for (QueryDocumentSnapshot document : documents) {
-            // Firestore tự động map các trường trong JSON vào class Track
-            Track track = document.toObject(Track.class);
-            trackList.add(track);
+            trackList.add(document.toObject(Track.class));
         }
-        
         return trackList;
+    }
+
+    @Override
+    public List<Track> getTracksByArtist(String artistId) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        ApiFuture<QuerySnapshot> future = db.collection("tracks").whereEqualTo("artistId", artistId).get();
+        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+        List<Track> trackList = new ArrayList<>();
+        for (QueryDocumentSnapshot document : documents) {
+            trackList.add(document.toObject(Track.class));
+        }
+        return trackList;
+    }
+    @Override
+    public void deleteTrack(String trackId, String artistId) throws ExecutionException, InterruptedException, IOException {
+        Firestore db = FirestoreClient.getFirestore();
+        
+        // 1. Lấy thông tin bài hát để biết đường dẫn file mà xóa
+        Track track = db.collection("tracks").document(trackId).get().get().toObject(Track.class);
+        
+        if (track == null) {
+            throw new RuntimeException("Bài hát không tồn tại!");
+        }
+
+        // 2. Kiểm tra quyền (Chỉ chủ bài hát mới được xóa)
+        if (!track.getArtistId().equals(artistId)) {
+            throw new RuntimeException("Bạn không có quyền xóa bài này!");
+        }
+
+        // 3. Xóa file nhạc trong thư mục uploads
+        if (track.getFileUrl() != null) {
+            // Link dạng: http://localhost:8080/api/uploads/ten-file.mp3
+            // Cắt lấy phần tên file cuối cùng
+            String fileName = track.getFileUrl().substring(track.getFileUrl().lastIndexOf("/") + 1);
+            Path filePath = this.fileStorageLocation.resolve(fileName);
+            Files.deleteIfExists(filePath);
+        }
+
+        // 4. Xóa file ảnh trong thư mục uploads (nếu có và không phải ảnh mặc định)
+        if (track.getCoverUrl() != null && track.getCoverUrl().contains("/uploads/")) {
+            String imageName = track.getCoverUrl().substring(track.getCoverUrl().lastIndexOf("/") + 1);
+            Path imagePath = this.fileStorageLocation.resolve(imageName);
+            Files.deleteIfExists(imagePath);
+        }
+
+        // 5. Xóa dữ liệu trong Firestore
+        db.collection("tracks").document(trackId).delete();
     }
 }

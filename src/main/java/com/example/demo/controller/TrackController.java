@@ -8,43 +8,56 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/tracks")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class TrackController {
 
     private final TrackService trackService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadTrack(@RequestParam("file") MultipartFile file,
-                                           @RequestParam("artistId") String artistId,
-                                           @RequestParam("artistName") String artistName) {
+                                         @RequestParam(value = "coverImage", required = false) MultipartFile coverImage,
+                                         @RequestParam("title") String title,
+                                         @RequestParam("artistId") String artistId,
+                                         @RequestParam("artistName") String artistName) {
         try {
-            Track savedTrack = trackService.uploadTrack(file, artistId, artistName);
+            Track savedTrack = trackService.uploadTrack(file, coverImage, title, artistId, artistName);
             return ResponseEntity.ok(savedTrack);
-        } catch (IOException | ExecutionException | InterruptedException e) {
-            // Bắt thêm các exception từ Firestore
-            Thread.currentThread().interrupt(); // Good practice
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload file: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
         }
     }
 
-    // URL gọi sẽ là: GET http://localhost:8080/tracks
     @GetMapping
     public ResponseEntity<List<Track>> getAllTracks() {
         try {
             List<Track> tracks = trackService.getAllTracks();
-            if (tracks.isEmpty()) {
-                return ResponseEntity.noContent().build();
-            }
             return ResponseEntity.ok(tracks);
-        } catch (ExecutionException | InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/artist/{artistId}")
+    public ResponseEntity<List<Track>> getTracksByArtist(@PathVariable String artistId) {
+        try {
+            List<Track> tracks = trackService.getTracksByArtist(artistId);
+            return ResponseEntity.ok(tracks);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    @DeleteMapping("/{trackId}")
+    public ResponseEntity<?> deleteTrack(@PathVariable String trackId, @RequestParam String artistId) {
+        try {
+            trackService.deleteTrack(trackId, artistId);
+            return ResponseEntity.ok("Xóa thành công!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
         }
     }
 }

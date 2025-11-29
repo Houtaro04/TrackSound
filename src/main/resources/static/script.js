@@ -1,19 +1,23 @@
-// --- XỬ LÝ CAROUSEL ---
+console.log("Script đang khởi động...");
+
+// ==========================================
+// 1. CẤU HÌNH & BIẾN TOÀN CỤC
+// ==========================================
 const carousel = document.getElementById('carousel');
-let index = 1;
-setInterval(() => {
-    index = (index + 1) % 3;
-    if (carousel) {
-        carousel.style.transform = `translateX(-${index * 25}%)`;
-    }
-}, 6000);
+let carouselIndex = 1;
+let allTracks = [];       
+let currentIndex = 0;      
+const ITEMS_PER_PAGE = 12; 
 
-// --- BIẾN TOÀN CỤC ĐỂ QUẢN LÝ PHÂN TRANG (MỚI THÊM) ---
-let allTracks = [];        // Chứa danh sách tất cả bài hát tải về
-let currentIndex = 0;      // Đánh dấu đang hiển thị đến bài nào
-const ITEMS_PER_PAGE = 12; // Số bài hiển thị mỗi lần
+// Carousel tự động chạy
+if (carousel) {
+    setInterval(() => {
+        carouselIndex = (carouselIndex + 1) % 3;
+        carousel.style.transform = `translateX(-${carouselIndex * 25}%)`;
+    }, 6000);
+}
 
-// --- CẤU HÌNH VÀ XỬ LÝ FIREBASE ---
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyBKfbTKlSTuPgqVTEVQEvZ0XNZzTwu2AKw", 
     authDomain: "tracksound-93a54.firebaseapp.com",
@@ -23,83 +27,74 @@ const firebaseConfig = {
     appId: "1:867088273750:web:3e630ac9a980b8040b46f7"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
+// ==========================================
+// 2. GIAO DIỆN USER
+// ==========================================
 const signInButton = document.getElementById('signInBtn');
 const createAccountButton = document.getElementById('createAccountBtn');
 
-// Hàm cập nhật giao diện khi người dùng đăng nhập
 function updateUIForLoggedInUser(user) {
     const headerRight = document.querySelector('.header__right');
     if (!headerRight) return;
-
     headerRight.innerHTML = ''; 
 
-    const uploadLink = document.createElement('a');
-    uploadLink.href = '/upload';
-    uploadLink.className = 'uploadButton';
-    uploadLink.textContent = 'Upload';
+    // Nút Upload
+    const uploadBtn = document.createElement('div');
+    uploadBtn.className = 'uploadButton';
+    uploadBtn.textContent = 'Upload';
+    uploadBtn.style.cursor = 'pointer';
+    
+    uploadBtn.onclick = () => {
+        const modal = document.getElementById('uploadModal');
+        if (modal) modal.style.display = 'flex';
+    };
 
+    // User Profile
     const userProfile = document.createElement('div');
     userProfile.className = 'user-profile';
-
     const userAvatar = document.createElement('img');
-    userAvatar.src = user.picture; 
-    userAvatar.alt = user.name;
+    userAvatar.src = user.picture || 'https://via.placeholder.com/150'; 
     userAvatar.className = 'user-avatar';
     
-    userAvatar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const menu = userProfile.querySelector('.dropdown-menu');
-        if(menu) menu.classList.toggle('active');
-    });
-
-    // Dropdown Menu
     const dropdownMenu = document.createElement('div');
-    dropdownMenu.className = 'dropdown-menu'; // Lưu ý: Bạn cần CSS cho class này như bài trước đã làm
+    dropdownMenu.className = 'dropdown-menu';
 
-    // Tạo các item menu (ví dụ đơn giản)
-    const logoutBtn = document.createElement('div');
-    logoutBtn.textContent = 'Đăng xuất';
-    logoutBtn.style.padding = '10px';
-    logoutBtn.style.cursor = 'pointer';
-    
-    logoutBtn.addEventListener('click', () => {
-        firebase.auth().signOut().then(() => {
-            window.location.reload();
-        });
+    const profileBtn = createMenuItem('Hồ sơ của tôi', () => {
+        loadMyProfile(user); 
+        dropdownMenu.classList.remove('active');
     });
 
+    const logoutBtn = createMenuItem('Đăng xuất', () => {
+        firebase.auth().signOut().then(() => window.location.reload());
+    });
+
+    dropdownMenu.appendChild(profileBtn);
     dropdownMenu.appendChild(logoutBtn);
     userProfile.appendChild(userAvatar);
-    userProfile.appendChild(dropdownMenu); // Nhớ thêm CSS cho dropdown-menu ẩn hiện
-
-    headerRight.appendChild(uploadLink);
+    userProfile.appendChild(dropdownMenu);
+    headerRight.appendChild(uploadBtn);
     headerRight.appendChild(userProfile);
+
+    userAvatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('active');
+    });
 }
 
-// Hàm đăng nhập Google
-async function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    try {
-        const result = await auth.signInWithPopup(provider);
-        const idToken = await result.user.getIdToken();
-        
-        const response = await fetch('/api/auth/google-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken: idToken }),
-        });
-
-        if (!response.ok) throw new Error('Lỗi backend');
-        const userInfo = await response.json();
-        window.location.href = '/api';
-    } catch (error) {
-        console.error("Lỗi đăng nhập:", error);
-    }
+function createMenuItem(text, onClick) {
+    const item = document.createElement('div');
+    item.textContent = text;
+    item.style.padding = '10px';
+    item.style.cursor = 'pointer';
+    item.style.borderBottom = '1px solid #eee';
+    item.onclick = onClick;
+    return item;
 }
 
+// Auth Listener
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         const idToken = await user.getIdToken();
@@ -108,90 +103,159 @@ auth.onAuthStateChanged(async (user) => {
             headers: {'Content-Type': 'application/json'}, 
             body: JSON.stringify({ idToken })
         });
-        if (response.ok) {
-            const userInfo = await response.json();
-            updateUIForLoggedInUser(userInfo);
-        }
+        if (response.ok) updateUIForLoggedInUser(await response.json());
     } else {
         if (signInButton) signInButton.addEventListener('click', signInWithGoogle);
         if (createAccountButton) createAccountButton.addEventListener('click', signInWithGoogle);
     }
 });
 
-// --- HÀM LOAD SONGS TỪ DATABASE CỦA BẠN ---
-async function loadSongs() {
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
     try {
-        const response = await fetch('http://localhost:8080/api/tracks'); 
-        if (!response.ok || response.status === 204) return;
-
-        const text = await response.text(); 
-        if (!text) return; 
-        
-        const songs = JSON.parse(text);
-        const trackList = document.querySelector('.badgeList');
-        // Ẩn nút xem thêm nếu đang load nhạc từ DB (vì chưa làm phân trang cho DB)
-        const loadMoreBtn = document.getElementById('loadMoreContainer');
-        if(loadMoreBtn) loadMoreBtn.style.display = 'none';
-
-        trackList.innerHTML = ''; 
-
-        songs.forEach(song => {
-            const imageSrc = song.coverUrl ? song.coverUrl : 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop';
-            // Dùng hàm playNow để phát nhạc
-            const safeTitle = song.title ? song.title.replace(/'/g, "\\'") : "";
-            const safeArtist = song.artistName ? song.artistName.replace(/'/g, "\\'") : "";
-            
-            const html = `
-                <div class="badgeItem">
-                  <div class="image-container" style="position:relative; cursor:pointer;" 
-                       onclick="playNow('${song.fileUrl}', '${safeTitle}', '${safeArtist}', '${imageSrc}')">
-                      <img src="${imageSrc}" alt="${song.title}">
-                      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); 
-                                  background:#f50; width:50px; height:50px; border-radius:50%; 
-                                  display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-                          <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
-                      </div>
-                  </div>
-                  <div class="badgeItem__info">
-                    <div class="badgeItem__title">${song.title}</div>
-                    <div class="badgeItem__artist">${song.artistName}</div>
-                  </div>
-                </div>
-            `;
-            trackList.insertAdjacentHTML('beforeend', html);
+        const result = await auth.signInWithPopup(provider);
+        const idToken = await result.user.getIdToken();
+        const response = await fetch('/api/auth/google-login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken })
         });
-    } catch (error) {
-        console.error("Lỗi loadSongs:", error);
-    }
+        if (response.ok) window.location.href = '/api';
+    } catch (error) { console.error(error); }
 }
 
-loadSongs(); // Gọi khi tải trang
+window.onclick = (e) => {
+    if (!e.target.closest('.user-profile')) {
+        document.querySelectorAll('.dropdown-menu.active').forEach(m => m.classList.remove('active'));
+    }
+};
 
-// --- HÀM PHÁT NHẠC ---
+// ==========================================
+// 3. LOGIC UPLOAD FILE
+// ==========================================
+const modalAudioInput = document.getElementById('modalAudioInput'); 
+const modalCoverInput = document.getElementById('modalCoverInput'); 
+const uploadTitleInput = document.getElementById('uploadTitle');
+const previewAudio = document.getElementById('previewAudio');
+const previewImage = document.getElementById('previewImage');
+const confirmUploadBtn = document.getElementById('confirmUploadBtn');
+const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+const uploadModal = document.getElementById('uploadModal');
+const loadingScreen = document.getElementById('uploadLoading');
+
+// A. Chọn nhạc -> Hiện nghe thử
+if (modalAudioInput) {
+    modalAudioInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if(uploadTitleInput.value === "") {
+                uploadTitleInput.value = file.name.replace(/\.[^/.]+$/, "");
+            }
+            previewAudio.src = URL.createObjectURL(file);
+            previewAudio.style.display = 'block';
+        }
+    });
+}
+
+// B. Chọn ảnh -> Hiện xem trước
+if (modalCoverInput) {
+    modalCoverInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            previewImage.src = URL.createObjectURL(file);
+            previewImage.style.display = 'block';
+        }
+    });
+}
+
+// C. Nút Hủy
+if (cancelUploadBtn) {
+    cancelUploadBtn.addEventListener('click', () => {
+        uploadModal.style.display = 'none';
+        modalAudioInput.value = '';
+        modalCoverInput.value = '';
+        uploadTitleInput.value = '';
+        previewAudio.style.display = 'none';
+        previewImage.style.display = 'none';
+    });
+}
+
+// D. Nút XÁC NHẬN
+if (confirmUploadBtn) {
+    confirmUploadBtn.addEventListener('click', async () => {
+        const audioFile = modalAudioInput.files[0];
+        const coverFile = modalCoverInput.files[0];
+        const title = uploadTitleInput.value.trim();
+
+        if (!audioFile) {
+            alert("Vui lòng chọn file nhạc!"); return;
+        }
+
+        const user = firebase.auth().currentUser;
+        if (!user) { alert("Cần đăng nhập!"); return; }
+
+        uploadModal.style.display = 'none';
+        if(loadingScreen) loadingScreen.style.display = 'flex';
+
+        const formData = new FormData();
+        formData.append("file", audioFile);
+        formData.append("title", title || audioFile.name);
+        formData.append("artistId", user.uid);
+        formData.append("artistName", user.displayName || "Unknown");
+        if (coverFile) {
+            formData.append("coverImage", coverFile);
+        }
+
+        try {
+            const res = await fetch('http://localhost:8080/api/tracks/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                alert("Tải lên thành công!");
+                loadMyProfile(user); 
+            } else {
+                const txt = await res.text();
+                alert("Lỗi: " + txt);
+            }
+        } catch (e) {
+            console.error("Lỗi mạng:", e);
+            alert("Lỗi mạng: Không kết nối được server.");
+        } finally {
+            if(loadingScreen) loadingScreen.style.display = 'none';
+            modalAudioInput.value = '';
+            modalCoverInput.value = '';
+            uploadTitleInput.value = '';
+            previewAudio.style.display = 'none';
+            previewImage.style.display = 'none';
+        }
+    });
+}
+
+// ==========================================
+// 4. PLAYER & HIỂN THỊ LIST NHẠC (ĐÃ SỬA LỖI ĐỎ)
+// ==========================================
 function playNow(url, title, artist, image) {
+    // Sửa lỗi: Kiểm tra xem các phần tử có tồn tại không trước khi gán
     const playerBar = document.getElementById('musicPlayer');
-    const playerImg = document.getElementById('playerImg');
-    const playerTitle = document.getElementById('playerTitle');
-    const playerArtist = document.getElementById('playerArtist');
-    const mainAudio = document.getElementById('mainAudio');
+    const pImg = document.getElementById('playerImg');
+    const pTitle = document.getElementById('playerTitle');
+    const pArtist = document.getElementById('playerArtist');
+    const audio = document.getElementById('mainAudio');
 
-    if(playerImg) playerImg.src = image;
-    if(playerTitle) playerTitle.textContent = title;
-    if(playerArtist) playerArtist.textContent = artist;
+    if (pImg) pImg.src = image;
+    if (pTitle) pTitle.textContent = title;
+    if (pArtist) pArtist.textContent = artist;
     
-    if(mainAudio) {
-        mainAudio.src = url;
-        mainAudio.play();
+    if (audio) {
+        audio.src = url;
+        audio.play().catch(e => console.log("Chưa thể tự phát nhạc: ", e));
     }
-    if(playerBar) playerBar.classList.add('active');
+    if (playerBar) playerBar.classList.add('active');
 }
 
-// --- 1. HÀM CHUẨN BỊ DỮ LIỆU & RESET (THAY THẾ renderTrackList CŨ) ---
 function renderTrackList(tracks) {
     const trackListContainer = document.querySelector('.badgeList');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
-    
-    // Reset lại mọi thứ khi có kết quả tìm kiếm mới
     trackListContainer.innerHTML = ''; 
     allTracks = tracks || [];
     currentIndex = 0;
@@ -201,111 +265,137 @@ function renderTrackList(tracks) {
         if(loadMoreContainer) loadMoreContainer.style.display = 'none';
         return;
     }
-
-    // Gọi hàm hiển thị lô đầu tiên
     showMoreSongs();
 }
 
-// --- 2. HÀM HIỂN THỊ THÊM (MỚI) ---
 function showMoreSongs() {
     const trackListContainer = document.querySelector('.badgeList');
     const loadMoreContainer = document.getElementById('loadMoreContainer');
-
-    // Lấy ra các bài hát tiếp theo (12 bài)
     const nextBatch = allTracks.slice(currentIndex, currentIndex + ITEMS_PER_PAGE);
 
     nextBatch.forEach(track => {
-        // Xử lý dữ liệu từ iTunes
-        const image = track.artworkUrl100 ? track.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/300';
-        const title = track.trackName;
-        const artist = track.artistName;
-        const audioUrl = track.previewUrl; 
+        let image = track.coverUrl || (track.artworkUrl100 ? track.artworkUrl100.replace('100x100', '600x600') : 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300');
+        let title = track.title || track.trackName;
+        let artist = track.artistName;
+        let audioUrl = track.fileUrl || track.previewUrl;
+        
+        // Kiểm tra xem bài hát có phải của mình không
+        let isOwner = false;
+        if (firebase.auth().currentUser && track.artistId) {
+            isOwner = (track.artistId === firebase.auth().currentUser.uid);
+        }
 
-        const safeTitle = title ? title.replace(/'/g, "\\'") : "";
-        const safeArtist = artist ? artist.replace(/'/g, "\\'") : "";
+        const sTitle = title ? title.replace(/'/g, "\\'") : "";
+        const sArtist = artist ? artist.replace(/'/g, "\\'") : "";
+
+        // Nút Xóa (Chỉ hiện nếu là chủ sở hữu)
+        let deleteBtnHTML = '';
+        if (isOwner) {
+            deleteBtnHTML = `
+                <button onclick="event.stopPropagation(); requestDeleteTrack('${track.id}')" 
+                        style="background: white; border: 1px solid red; color: red; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px;">
+                    Xóa
+                </button>
+            `;
+        }
 
         const html = `
             <div class="badgeItem">
-              <div class="image-container" style="position:relative; cursor:pointer;" 
-                   onclick="playNow('${audioUrl}', '${safeTitle}', '${safeArtist}', '${image}')">
-                  <img src="${image}" alt="${title}">
-                  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); 
-                              background:#f50; width:50px; height:50px; border-radius:50%; 
-                              display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+              <div class="image-container" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="position:relative; cursor:pointer;">
+                  <img src="${image}" alt="${title}" onerror="this.src='https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'">
+                  <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#f50; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
                       <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
                   </div>
               </div>
-
               <div class="badgeItem__info">
-                <div class="badgeItem__title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</div>
-                <div class="badgeItem__artist">${artist}</div>
-                <button class="sc-button-cta" 
-                   onclick="playNow('${audioUrl}', '${safeTitle}', '${safeArtist}', '${image}')"
-                   style="display:block; width:100%; margin-top:10px; cursor:pointer;">
-                   Phát Ngay
-                </button>
-              </div>
-            </div>
-        `;
+                <div class="badgeItem__title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
+                <div class="badgeItem__artist" style="${isOwner ? 'color:orangered; font-weight:bold' : ''}">
+                    ${artist} ${isOwner ? '(Tôi)' : ''}
+                </div>
+                
+                <button class="sc-button-cta sc-button-loadmore" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="display:block; width:100%; margin-top:10px; padding:8px;">Phát Ngay</button>
+                
+                ${deleteBtnHTML} </div>
+            </div>`;
         trackListContainer.insertAdjacentHTML('beforeend', html);
     });
 
-    // Cập nhật vị trí
     currentIndex += nextBatch.length;
+    if (loadMoreContainer) loadMoreContainer.style.display = (currentIndex >= allTracks.length) ? 'none' : 'block';
+}
 
-    // Ẩn/Hiện nút Xem thêm
-    if (loadMoreContainer) {
-        if (currentIndex >= allTracks.length) {
-            loadMoreContainer.style.display = 'none';
+// --- HÀM XỬ LÝ XÓA BÀI HÁT (MỚI) ---
+async function requestDeleteTrack(trackId) {
+    if (!confirm("Bạn có chắc chắn muốn xóa bài hát này không?")) return;
+
+    const user = firebase.auth().currentUser;
+    if (!user) { alert("Vui lòng đăng nhập lại."); return; }
+
+    try {
+        const response = await fetch(`http://localhost:8080/api/tracks/${trackId}?artistId=${user.uid}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            alert("Đã xóa bài hát!");
+            loadMyProfile(user); // Tải lại danh sách
         } else {
-            loadMoreContainer.style.display = 'block';
+            const txt = await response.text();
+            alert("Lỗi khi xóa: " + txt);
         }
+    } catch (error) {
+        console.error("Lỗi xóa:", error);
+        alert("Lỗi kết nối đến server.");
     }
 }
 
-// --- TÌM KIẾM ---
+// ==========================================
+// 5. FETCH DATA
+// ==========================================
 async function searchAndRender(query) {
-    const trackListContainer = document.querySelector('.badgeList');
+    const container = document.querySelector('.badgeList');
+    container.innerHTML = '<p style="text-align:center; padding:20px;">Đang tìm...</p>';
     try {
-        trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tìm kiếm...</p>';
-        // Ẩn nút xem thêm trong lúc tìm
-        const btn = document.getElementById('loadMoreContainer');
-        if(btn) btn.style.display = 'none';
-
-        const response = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
+        const res = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
         renderTrackList(data.results);
-    } catch (error) {
-        console.error("Lỗi:", error);
-        trackListContainer.innerHTML = '<p style="color:red; text-align:center">Có lỗi xảy ra.</p>';
-    }
+    } catch (e) { console.error(e); container.innerHTML='<p>Lỗi.</p>'; }
 }
 
-const searchForm = document.querySelector('.headerSearch');
-const searchInput = document.querySelector('.headerSearch__input');
-
-if (searchForm) {
-    searchForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
-        const keyword = searchInput.value;
-        if (keyword.trim()) await searchAndRender(keyword);
-    });
-}
-
-// --- LOAD TRENDING ---
 async function loadTrending() {
-    const trackListContainer = document.querySelector('.badgeList');
+    document.querySelector('.trendingTracks').scrollIntoView({behavior:'smooth'});
+    const container = document.querySelector('.badgeList');
+    container.innerHTML = '<p style="text-align:center; padding:20px;">Loading Trending...</p>';
     try {
-        document.querySelector('.trendingTracks').scrollIntoView({ behavior: 'smooth' });
-        trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tải danh sách Trending...</p>';
-        
-        const response = await fetch('http://localhost:8080/api/rapid/trending');
-        const data = await response.json();
-        
+        const res = await fetch('http://localhost:8080/api/rapid/trending');
+        const data = await res.json();
         renderTrackList(data.results);
-    } catch (error) {
-        console.error("Lỗi Trending:", error);
-        trackListContainer.innerHTML = '<p style="color:red; text-align:center">Lỗi tải Trending.</p>';
-    }
+    } catch (e) { console.error(e); }
 }
+
+async function loadSongs() {
+    try {
+        const res = await fetch('http://localhost:8080/api/tracks');
+        if (!res.ok || res.status === 204) return;
+        const text = await res.text();
+        if (text) renderTrackList(JSON.parse(text));
+    } catch (e) { console.error(e); }
+}
+loadSongs();
+
+async function loadMyProfile(user) {
+    document.querySelector('.frontHero').style.display = 'none';
+    const title = document.querySelector('.trendingTracks__title');
+    if(title) { title.textContent = `Hồ sơ của: ${user.name}`; title.style.textAlign = 'center'; }
+    const container = document.querySelector('.badgeList');
+    container.innerHTML = '<p style="text-align:center; padding:20px;">Loading Profile...</p>';
+    try {
+        const res = await fetch(`http://localhost:8080/api/tracks/artist/${user.uid}`);
+        if(!res.ok) { container.innerHTML='<p>Chưa có bài nào.</p>'; return; }
+        const myTracks = await res.json();
+        renderTrackList(myTracks);
+    } catch (e) { console.error(e); }
+}
+
+const sForm = document.querySelector('.headerSearch');
+if(sForm) sForm.addEventListener('submit', (e) => { e.preventDefault(); const v=document.querySelector('.headerSearch__input').value; if(v.trim()) searchAndRender(v); });

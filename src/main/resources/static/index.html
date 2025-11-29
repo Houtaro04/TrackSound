@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SoundTrack</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,9 +26,8 @@
     </form>
 
     <div class="header__right">
-      <button id="signInBtn" class="sc-button-tertiary">Sign in</button>
-      <button id="createAccountBtn" class="sc-button-cta">Create account</button>
-      <a href="/upload" class="uploadButton">Upload</a>
+      <button id="signInBtn" class="sc-button-cta">Sign in with Google</button>
+      <a href="#" class="uploadButton">Upload</a>
     </div>
   </div>
 </header>
@@ -89,16 +87,49 @@
   </div>
 </footer>
 
+<div id="uploadModal" class="upload-modal" style="display: none;">
+  <div class="upload-modal__content">
+    <h2 style="margin-top: 0; color: #f50;">Tải lên bài hát mới</h2>
+    
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">1. Chọn file nhạc (MP3/WAV/MP4):</label>
+        <input type="file" id="modalAudioInput" accept="audio/*,video/mp4,.wav,.mp3" class="sc-input">
+        <audio id="previewAudio" controls style="width: 100%; margin-top: 10px; display:none;"></audio>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">2. Tên bài hát:</label>
+        <input type="text" id="uploadTitle" class="sc-input" placeholder="Ví dụ: Cơn Mưa Ngang Qua...">
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label style="font-weight:bold; display:block; margin-bottom:5px;">3. Ảnh bìa (Tùy chọn):</label>
+        <input type="file" id="modalCoverInput" accept="image/*" class="sc-input">
+        <img id="previewImage" src="" style="width: 100px; height: 100px; object-fit: cover; margin-top: 10px; border-radius: 4px; display: none; border: 1px solid #ccc;">
+    </div>
+
+    <div style="text-align: right; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+        <button id="cancelUploadBtn" class="sc-button" style="margin-right: 10px; background: #fff; border: 1px solid #ccc; cursor: pointer; padding: 8px 16px;">Hủy</button>
+        <button id="confirmUploadBtn" class="sc-button sc-button-cta" style="background: #f50; color: white; border: none; cursor: pointer; padding: 8px 16px;">Xác nhận tải lên</button>
+    </div>
+  </div>
+</div>
+
+<div id="uploadLoading" style="position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; color: white;">
+    <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">Đang tải lên...</div>
+    <div>Vui lòng không tắt trình duyệt.</div>
+</div>
+
+<input type="file" id="hiddenUploadInput" accept="audio/*,video/mp4,.wav,.mp3" style="display: none;">
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-<script src="script.js"></script>
-<!-- Thanh phát nhạc -->
 <div class="music-player" id="musicPlayer">
   <div class="music-player__inner">
     
     <div class="music-player__info">
-      <img id="playerImg" src="https://via.placeholder.com/60" alt="">
+      <img id="playerImg" src="https://via.placeholder.com/60" alt="" style="width: 50px; height: 50px; object-fit: cover;">
       <div>
         <div id="playerTitle" class="music-player__title">Chọn bài hát để nghe</div>
         <div id="playerArtist" class="music-player__artist">...</div>
@@ -112,5 +143,6 @@
   </div>
 </div>
 
+<script src="script.js"></script>
 </body>
 </html>
