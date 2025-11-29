@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/tracks")
@@ -29,6 +30,21 @@ public class TrackController {
             // Bắt thêm các exception từ Firestore
             Thread.currentThread().interrupt(); // Good practice
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload file: " + e.getMessage());
+        }
+    }
+
+    // URL gọi sẽ là: GET http://localhost:8080/tracks
+    @GetMapping
+    public ResponseEntity<List<Track>> getAllTracks() {
+        try {
+            List<Track> tracks = trackService.getAllTracks();
+            if (tracks.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(tracks);
+        } catch (ExecutionException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

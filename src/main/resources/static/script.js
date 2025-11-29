@@ -126,7 +126,7 @@ async function signInWithGoogle() {
         console.log('Đăng nhập thành công! Thông tin người dùng:', userInfo);
         
         // 5. Chuyển hướng về trang chủ. Trang sẽ tự tải lại và cập nhật giao diện.
-        window.location.href = '/';
+        window.location.href = '/api';
 
     } catch (error) {
         console.error("Lỗi trong quá trình đăng nhập:", error);
@@ -170,3 +170,42 @@ window.addEventListener('click', (e) => {
         });
     }
 });
+
+async function loadSongs() {
+    try {
+        // Gọi API Spring Boot của bạn
+        // Lưu ý: Controller map là /tracks nên đường dẫn là localhost:8080/tracks
+        const response = await fetch('http://localhost:8080/tracks'); 
+        
+        if (!response.ok) {
+             throw new Error('Không thể tải danh sách nhạc');
+        }
+
+        const songs = await response.json();
+        const trackList = document.querySelector('.badgeList');
+        trackList.innerHTML = ''; // Xóa dữ liệu mẫu cũ
+
+        // Duyệt qua danh sách và hiển thị
+        songs.forEach(song => {
+            // Giả sử model Track của bạn có các trường: title, artistName, coverUrl (hoặc imageUrl)
+            // Nếu bạn chưa có link ảnh bìa, có thể dùng ảnh mặc định
+            const imageSrc = song.coverUrl ? song.coverUrl : 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop';
+            
+            const html = `
+                <div class="badgeItem">
+                  <img src="${imageSrc}" alt="${song.title}">
+                  <div class="badgeItem__info">
+                    <div class="badgeItem__title">${song.title}</div>
+                    <div class="badgeItem__artist">${song.artistName}</div>
+                  </div>
+                </div>
+            `;
+            trackList.insertAdjacentHTML('beforeend', html);
+        });
+    } catch (error) {
+        console.error("Lỗi:", error);
+    }
+}
+
+// Gọi hàm ngay khi trang web chạy
+loadSongs();

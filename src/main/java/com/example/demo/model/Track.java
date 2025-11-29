@@ -1,19 +1,26 @@
 package com.example.demo.model;
 
 import com.google.cloud.firestore.annotation.DocumentId;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class Track {
     @DocumentId
     private String id;
     private String title;
-    private String artistId; // ID của người dùng đã upload
+    
+    // Thêm trường này vào để khớp với setArtistId bên Service
+    private String artistId; 
+    
     private String artistName;
-    private String fileUrl;
-    private Date uploadedAt;
+    
+    // Đổi tên từ 'url' thành 'fileUrl' để khớp với setFileUrl bên Service
+    private String fileUrl; 
+    
+    private String coverUrl;
+    private java.util.Date uploadedAt;
 }
