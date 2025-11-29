@@ -175,13 +175,19 @@ async function loadSongs() {
     try {
         // Gọi API Spring Boot của bạn
         // Lưu ý: Controller map là /tracks nên đường dẫn là localhost:8080/tracks
-        const response = await fetch('http://localhost:8080/tracks'); 
+        const response = await fetch('http://localhost:8080/api/tracks'); 
         
-        if (!response.ok) {
-             throw new Error('Không thể tải danh sách nhạc');
+        // 1. Nếu server báo lỗi hoặc không có nội dung (204) thì dừng luôn
+        if (!response.ok || response.status === 204) {
+             console.log("Chưa có bài hát nào trong database.");
+             return; 
         }
 
-        const songs = await response.json();
+        // 2. Chỉ chuyển sang JSON khi chắc chắn có dữ liệu
+        const text = await response.text(); 
+        if (!text) return; // Nếu body rỗng thì thôi
+        
+        const songs = JSON.parse(text);
         const trackList = document.querySelector('.badgeList');
         trackList.innerHTML = ''; // Xóa dữ liệu mẫu cũ
 
@@ -209,3 +215,109 @@ async function loadSongs() {
 
 // Gọi hàm ngay khi trang web chạy
 loadSongs();
+
+// --- XỬ LÝ TÌM KIẾM NHẠC ---
+
+const searchForm = document.querySelector('.headerSearch');
+const searchInput = document.querySelector('.headerSearch__input');
+const trackListContainer = document.querySelector('.badgeList');
+
+if (searchForm) {
+    searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); 
+        const keyword = searchInput.value;
+        if (keyword.trim()) {
+            await searchAndRender(keyword);
+        }
+    });
+}
+
+// --- 1. HÀM PHÁT NHẠC (MỚI) ---
+function playNow(url, title, artist, image) {
+    const playerBar = document.getElementById('musicPlayer');
+    const playerImg = document.getElementById('playerImg');
+    const playerTitle = document.getElementById('playerTitle');
+    const playerArtist = document.getElementById('playerArtist');
+    const mainAudio = document.getElementById('mainAudio');
+
+    // Cập nhật thông tin lên thanh Player
+    playerImg.src = image;
+    playerTitle.textContent = title;
+    playerArtist.textContent = artist;
+    
+    // Gán link nhạc và phát
+    mainAudio.src = url;
+    mainAudio.play();
+
+    // Hiện thanh player lên (nếu đang ẩn)
+    playerBar.classList.add('active');
+}
+
+// --- 2. SỬA HÀM RENDER (CẬP NHẬT) ---
+async function searchAndRender(query) {
+    try {
+        trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tìm kiếm...</p>';
+
+        const response = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+             trackListContainer.innerHTML = '<p style="text-align:center">Lỗi kết nối.</p>';
+             return;
+        }
+
+        const data = await response.json();
+        trackListContainer.innerHTML = ''; 
+
+        const tracks = data.results || [];
+
+        if (tracks.length === 0) {
+            trackListContainer.innerHTML = '<p style="text-align:center">Không tìm thấy bài hát nào.</p>';
+            return;
+        }
+
+        tracks.forEach(track => {
+            // Lấy dữ liệu
+            const image = track.artworkUrl100 ? track.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/300';
+            const title = track.trackName;
+            const artist = track.artistName;
+            const audioUrl = track.previewUrl; 
+
+            // Xử lý chuỗi để tránh lỗi khi đưa vào onclick (ví dụ tên bài có dấu nháy đơn ')
+            // Chúng ta dùng replace để thêm dấu gạch chéo trước dấu nháy đơn
+            const safeTitle = title.replace(/'/g, "\\'");
+            const safeArtist = artist.replace(/'/g, "\\'");
+
+            // --- TẠO HTML VỚI SỰ KIỆN ONCLICK ---
+            // Khi bấm vào nút "Play" (hoặc cả thẻ), nó gọi hàm playNow()
+            const html = `
+                <div class="badgeItem">
+                  <div class="image-container" style="position:relative; cursor:pointer;" 
+                       onclick="playNow('${audioUrl}', '${safeTitle}', '${safeArtist}', '${image}')">
+                      <img src="${image}" alt="${title}">
+                      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); 
+                                  background:#f50; width:50px; height:50px; border-radius:50%; 
+                                  display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+                          <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                  </div>
+
+                  <div class="badgeItem__info">
+                    <div class="badgeItem__title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${title}</div>
+                    <div class="badgeItem__artist">${artist}</div>
+                    
+                    <button class="sc-button-cta" 
+                       onclick="playNow('${audioUrl}', '${safeTitle}', '${safeArtist}', '${image}')"
+                       style="display:block; width:100%; margin-top:10px; cursor:pointer;">
+                       Phát Ngay
+                    </button>
+                  </div>
+                </div>
+            `;
+            trackListContainer.insertAdjacentHTML('beforeend', html);
+        });
+
+    } catch (error) {
+        console.error("Lỗi:", error);
+        trackListContainer.innerHTML = '<p style="color:red; text-align:center">Có lỗi xảy ra.</p>';
+    }
+}

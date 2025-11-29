@@ -90,6 +90,24 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
 <script src="script.js"></script>
+<!-- Thanh phát nhạc -->
+<div class="music-player" id="musicPlayer">
+  <div class="music-player__inner">
+    
+    <div class="music-player__info">
+      <img id="playerImg" src="https://via.placeholder.com/60" alt="">
+      <div>
+        <div id="playerTitle" class="music-player__title">Chọn bài hát để nghe</div>
+        <div id="playerArtist" class="music-player__artist">...</div>
+      </div>
+    </div>
+
+    <div class="music-player__controls">
+      <audio id="mainAudio" controls style="width: 100%; outline: none;"></audio>
+    </div>
+
+  </div>
+</div>
 
 </body>
 </html>
