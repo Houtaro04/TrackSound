@@ -347,3 +347,31 @@ nav ul {
     margin-bottom: 10px;
   }
 }
+
+/* --- CSS CHO NÚT XEM THÊM --- */
+.sc-button-loadmore {
+  background: orangered; /* Màu cam chủ đạo (giống SoundCloud) */
+  color: white;
+  border: none; /* Bỏ viền xám cũ */
+  padding: 12px 32px; /* Tăng kích thước nút */
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 30px; /* Bo tròn nhiều hơn cho hiện đại */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out; /* Hiệu ứng chuyển đổi mượt mà */
+  box-shadow: 0 4px 10px rgba(255, 69, 0, 0.3); /* Bóng đổ màu cam nhẹ */
+  outline: none; /* Bỏ đường viền khi bấm tab */
+}
+
+/* Hiệu ứng khi di chuột vào (Hover) */
+.sc-button-loadmore:hover {
+  background: #e03e00; /* Màu cam đậm hơn một chút */
+  transform: translateY(-2px); /* Nút nổi lên nhẹ */
+  box-shadow: 0 6px 15px rgba(255, 69, 0, 0.4); /* Bóng đổ đậm hơn */
+}
+
+/* Hiệu ứng khi bấm xuống (Active) */
+.sc-button-loadmore:active {
+  transform: translateY(1px); /* Nút lún xuống nhẹ tạo cảm giác bấm thật */
+  box-shadow: 0 2px 5px rgba(255, 69, 0, 0.3); /* Bóng đổ nhỏ lại */
+}

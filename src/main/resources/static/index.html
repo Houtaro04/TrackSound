@@ -62,17 +62,20 @@
 </section>
 
 <section class="trendingTracks">
-  <h2 class="trendingTracks__title">Hear what’s trending for free in the SoundCloud community</h2>
   <div class="badgeList">
-    <div class="badgeItem">
-      <img src="https://image-cdn.nct.vn/song/2023/05/25/1/d/e/b/1684995602573_300.jpg" alt="">
-      <div class="badgeItem__info">
-        <div class="badgeItem__title">Vì Anh Vẫn (Yên Concert)</div>
-        <div class="badgeItem__artist">Hoàng Dũng</div>
       </div>
-    </div>
+
+  <div id="loadMoreContainer" style="text-align: center; margin-top: 20px; display: none;">
+      <button onclick="showMoreSongs()" class="sc-button sc-button-cta sc-button-loadmore">
+        Xem thêm
+      </button>
   </div>
-  <a href="/charts" class="sc-button sc-button-large sc-button-cta sc-button-primary">Explore trending playlists</a>
+  
+  <div style="text-align: center; margin-top: 40px;">
+      <button onclick="loadTrending()" class="sc-button sc-button-large sc-button-cta sc-button-primary" style="cursor: pointer;">
+        Explore trending playlists
+      </button>
+  </div>
 </section>
 
 <footer>

@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 public class RapidApiService {
 
     // Chú ý: Cuối dòng này mình để {query} làm chỗ giữ chỗ
-    private final String ITUNES_API_URL = "https://itunes.apple.com/search?media=music&limit=20&term={query}";
+    private final String ITUNES_API_URL = "https://itunes.apple.com/search?media=music&limit=100&term={query}";
 
     public String searchTracks(String query) {
         try {

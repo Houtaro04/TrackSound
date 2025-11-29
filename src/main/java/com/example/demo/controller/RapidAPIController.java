@@ -20,4 +20,13 @@ public class RapidAPIController {
         String jsonResult = rapidApiService.searchTracks(query);
         return ResponseEntity.ok(jsonResult);
     }
+    @GetMapping("/trending")
+    public ResponseEntity<?> getTrending() {
+        // Từ khóa cũ: "Top Hits 2025 US UK Vietnam" -> Quá dài, iTunes không hiểu.
+        // Từ khóa mới: "Vpop" hoặc "Hot Music" hoặc "Billboard" -> Chắc chắn có bài.
+        
+        String jsonResult = rapidApiService.searchTracks("Vpop"); 
+        
+        return ResponseEntity.ok(jsonResult);
+    }
 }
