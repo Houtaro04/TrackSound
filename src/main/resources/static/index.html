@@ -35,9 +35,9 @@
 <section class="frontHero">
   <div class="frontHero__carousel" id="carousel" style="transform:translateX(-25%)">
     <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-artist-fan-534fb484.jpeg')">
-      <h2 class="frontHeroSlide__title">Discover.</h2>
+      <h2 class="frontHeroSlide__title">Discover</h2>
       <p class="frontHeroSlide__copy">Discover your next obsession, or become someone else’s.<br>SoundCloud is the only community where fans and artists come together to discover and connect through music.</p>
-      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Get Started</button>
+      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Sign In</button>
     </div>
     <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-artist-db39c288.jpeg')">
       <h2 class="frontHeroSlide__title">It all starts with<br>an upload.</h2>
@@ -47,7 +47,7 @@
     <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-fan-e6ab2de1.jpeg')">
       <h2 class="frontHeroSlide__title">Where every music scene lives.</h2>
       <p class="frontHeroSlide__copy">Discover 400 million songs, remixes and DJ sets: every chart-topping track you can find elsewhere, and millions more you can’t find anywhere else.</p>
-      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Explore Go+</button>
+      <button class="sc-button sc-button-large sc-button-cta sc-button-secondary">Listen Music</button>
     </div>
     <div class="frontHeroSlide__container" style="background-image:url('https://a-v2.sndcdn.com/assets/images/front-hero-artist-fan-534fb484.jpeg')"></div>
   </div>
@@ -126,6 +126,9 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
 <div class="music-player" id="musicPlayer">
+  <button id="closePlayerBtn" style="position: absolute; top: -15px; right: 10px; background: #333; color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+    ✕
+  </button>
   <div class="music-player__inner">
     
     <div class="music-player__info">

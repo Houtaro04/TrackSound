@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.model.Track;
 import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
@@ -136,5 +137,19 @@ public class TrackServiceImpl implements TrackService {
 
         // 5. Xóa dữ liệu trong Firestore
         db.collection("tracks").document(trackId).delete();
+    }
+    @Override
+    public void updateTrackTitle(String trackId, String artistId, String newTitle) throws ExecutionException, InterruptedException {
+        Firestore db = FirestoreClient.getFirestore();
+        DocumentReference trackRef = db.collection("tracks").document(trackId);
+        
+        // Kiểm tra quyền (chỉ chủ bài hát được sửa)
+        Track track = trackRef.get().get().toObject(Track.class);
+        if (track == null || !track.getArtistId().equals(artistId)) {
+            throw new RuntimeException("Không có quyền sửa!");
+        }
+
+        // Cập nhật title
+        trackRef.update("title", newTitle);
     }
 }

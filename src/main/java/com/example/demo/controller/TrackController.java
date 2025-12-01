@@ -60,4 +60,15 @@ public class TrackController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
         }
     }
+    @PutMapping("/{trackId}")
+    public ResponseEntity<?> updateTrackTitle(@PathVariable String trackId, 
+                                            @RequestParam String artistId, 
+                                            @RequestParam String newTitle) {
+        try {
+            trackService.updateTrackTitle(trackId, artistId, newTitle);
+            return ResponseEntity.ok("Đổi tên thành công!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
 }

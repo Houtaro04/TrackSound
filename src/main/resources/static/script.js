@@ -97,7 +97,12 @@ function createMenuItem(text, onClick) {
 // Auth Listener
 auth.onAuthStateChanged(async (user) => {
     if (user) {
+        console.log("Người dùng đã đăng nhập:", user);
+        //Ẩn Carousel
+        const heroSection = document.querySelector('.frontHero');
+        if (heroSection) heroSection.style.display = 'none';
         const idToken = await user.getIdToken();
+        //Gọi backend để đồng bộ session
         const response = await fetch('/api/auth/google-login', {
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
@@ -105,6 +110,8 @@ auth.onAuthStateChanged(async (user) => {
         });
         if (response.ok) updateUIForLoggedInUser(await response.json());
     } else {
+        const heroSection = document.querySelector('.frontHero');
+        if (heroSection) heroSection.style.display = 'block';
         if (signInButton) signInButton.addEventListener('click', signInWithGoogle);
         if (createAccountButton) createAccountButton.addEventListener('click', signInWithGoogle);
     }
@@ -235,6 +242,9 @@ if (confirmUploadBtn) {
 // 4. PLAYER & HIỂN THỊ LIST NHẠC (ĐÃ SỬA LỖI ĐỎ)
 // ==========================================
 function playNow(url, title, artist, image) {
+    // Nếu chưa đăng nhập -> Hàm checkAuthAndRedirect sẽ mở popup và trả về false -> Dừng lại.
+    if (!checkAuthAndRedirect()) return;
+    
     // Sửa lỗi: Kiểm tra xem các phần tử có tồn tại không trước khi gán
     const playerBar = document.getElementById('musicPlayer');
     const pImg = document.getElementById('playerImg');
@@ -288,19 +298,30 @@ function showMoreSongs() {
         const sTitle = title ? title.replace(/'/g, "\\'") : "";
         const sArtist = artist ? artist.replace(/'/g, "\\'") : "";
 
-        // Nút Xóa (Chỉ hiện nếu là chủ sở hữu)
-        let deleteBtnHTML = '';
+        // --- TẠO MENU 3 CHẤM (CHỈ HIỆN KHI LÀ CHỦ SỞ HỮU) ---
+        let optionsHTML = '';
         if (isOwner) {
-            deleteBtnHTML = `
-                <button onclick="event.stopPropagation(); requestDeleteTrack('${track.id}')" 
-                        style="background: white; border: 1px solid red; color: red; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 5px;">
-                    Xóa
-                </button>
+            optionsHTML = `
+                <div class="track-options">
+                    <button class="track-options-btn" onclick="event.stopPropagation(); toggleTrackMenu('${track.id}')">
+                        ⋮
+                    </button>
+                    <div id="menu-${track.id}" class="track-options-menu">
+                        <div class="track-options-item" onclick="event.stopPropagation(); requestEditTitle('${track.id}', '${sTitle}')">
+                            ✎ Sửa tên
+                        </div>
+                        <div class="track-options-item" onclick="event.stopPropagation(); requestDeleteTrack('${track.id}')" style="color:red;">
+                            🗑 Xóa nhạc
+                        </div>
+                    </div>
+                </div>
             `;
         }
 
         const html = `
-            <div class="badgeItem">
+            <div class="badgeItem" style="position: relative;">
+              ${optionsHTML}
+
               <div class="image-container" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="position:relative; cursor:pointer;">
                   <img src="${image}" alt="${title}" onerror="this.src='https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'">
                   <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#f50; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
@@ -312,10 +333,8 @@ function showMoreSongs() {
                 <div class="badgeItem__artist" style="${isOwner ? 'color:orangered; font-weight:bold' : ''}">
                     ${artist} ${isOwner ? '(Tôi)' : ''}
                 </div>
-                
                 <button class="sc-button-cta sc-button-loadmore" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="display:block; width:100%; margin-top:10px; padding:8px;">Phát Ngay</button>
-                
-                ${deleteBtnHTML} </div>
+              </div>
             </div>`;
         trackListContainer.insertAdjacentHTML('beforeend', html);
     });
@@ -399,3 +418,162 @@ async function loadMyProfile(user) {
 
 const sForm = document.querySelector('.headerSearch');
 if(sForm) sForm.addEventListener('submit', (e) => { e.preventDefault(); const v=document.querySelector('.headerSearch__input').value; if(v.trim()) searchAndRender(v); });
+
+// --- XỬ LÝ MENU 3 CHẤM ---
+
+// 1. Bật/Tắt Menu
+function toggleTrackMenu(trackId) {
+    // Đóng tất cả menu khác đang mở
+    document.querySelectorAll('.track-options-menu').forEach(menu => {
+        if (menu.id !== `menu-${trackId}`) menu.classList.remove('show');
+    });
+    
+    // Toggle menu hiện tại
+    const menu = document.getElementById(`menu-${trackId}`);
+    if (menu) menu.classList.toggle('show');
+}
+
+// 2. Đóng menu khi click ra ngoài
+window.addEventListener('click', () => {
+    document.querySelectorAll('.track-options-menu').forEach(menu => {
+        menu.classList.remove('show');
+    });
+});
+
+// 3. Hàm Sửa Tên Bài Hát
+async function requestEditTitle(trackId, oldTitle) {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    const newTitle = prompt("Nhập tên mới cho bài hát:", oldTitle);
+    
+    if (newTitle && newTitle.trim() !== "" && newTitle !== oldTitle) {
+        try {
+            // Gọi API Update (PUT)
+            const response = await fetch(`http://localhost:8080/api/tracks/${trackId}?artistId=${user.uid}&newTitle=${encodeURIComponent(newTitle)}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                alert("Đổi tên thành công!");
+                loadMyProfile(user); // Load lại để thấy tên mới
+            } else {
+                alert("Lỗi đổi tên: " + await response.text());
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Lỗi mạng.");
+        }
+    }
+}
+
+// --- HÀM KIỂM TRA ĐĂNG NHẬP ---
+function checkAuthAndRedirect() {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        // Nếu chưa đăng nhập -> Gọi hàm đăng nhập Google
+        signInWithGoogle(); 
+        return false; // Chặn hành động tiếp theo
+    }
+    return true; // Cho phép đi tiếp
+}
+
+// --- XỬ LÝ TÌM KIẾM (CÓ CHẶN ĐĂNG NHẬP) ---
+const searchForm = document.querySelector('.headerSearch');
+if (searchForm) {
+    searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); 
+        
+        // 1. Kiểm tra đăng nhập ngay lập tức
+        if (!checkAuthAndRedirect()) return; 
+
+        // 2. Nếu đã đăng nhập thì mới chạy tiếp
+        const keyword = document.querySelector('.headerSearch__input').value;
+        if (keyword.trim()) await searchAndRender(keyword);
+    });
+}
+
+// --- CHẶN CÁC NÚT KHI CHƯA ĐĂNG NHẬP ---
+
+// 1. Chặn nút Upload trên Header (Nút tĩnh lúc chưa login)
+const staticUploadBtn = document.querySelector('a.uploadButton');
+if (staticUploadBtn) {
+    staticUploadBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // Không cho chuyển trang
+        if (checkAuthAndRedirect()) {
+            // Nếu tình cờ đã login mà nút chưa đổi (hiếm gặp), thì mở popup upload
+            const modal = document.getElementById('uploadModal');
+            if (modal) modal.style.display = 'flex';
+        }
+    });
+}
+
+// ==========================================
+// XỬ LÝ SỰ KIỆN CÁC NÚT CHỨC NĂNG
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Xử lý nút "Explore trending playlists"
+    // Tìm nút nằm trong section .trendingTracks
+    const exploreTrendingBtn = document.querySelector('.trendingTracks button');
+    
+    if (exploreTrendingBtn) {
+        // Gỡ bỏ onclick cũ trong HTML (nếu có) để tránh xung đột
+        exploreTrendingBtn.onclick = null; 
+        
+        exploreTrendingBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Kiểm tra đăng nhập
+            if (checkAuthAndRedirect()) {
+                // Nếu đã đăng nhập thì gọi hàm load nhạc
+                if (typeof loadTrending === 'function') {
+                    loadTrending();
+                }
+            }
+        });
+    }
+
+    // 2. Xử lý các nút trên Banner (Get Started, Upload, Explore Go+)
+    const heroButtons = document.querySelectorAll('.frontHero .sc-button');
+    
+    heroButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Bấm vào là bắt đăng nhập ngay
+            if (checkAuthAndRedirect()) {
+                // Nếu đã đăng nhập rồi thì có thể scroll xuống hoặc mở upload
+                // Ví dụ: Bấm nút Upload ở banner thì mở popup upload
+                if (btn.textContent.includes('Upload')) {
+                    const modal = document.getElementById('uploadModal');
+                    if (modal) modal.style.display = 'flex';
+                } else {
+                    // Các nút khác thì cuộn xuống danh sách nhạc
+                    document.querySelector('.trendingTracks').scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    });
+});
+
+// --- XỬ LÝ NÚT ĐÓNG PLAYER ---
+const closePlayerBtn = document.getElementById('closePlayerBtn');
+const musicPlayerBar = document.getElementById('musicPlayer');
+const mainAudioPlayer = document.getElementById('mainAudio');
+
+if (closePlayerBtn) {
+    closePlayerBtn.addEventListener('click', () => {
+        // 1. Dừng nhạc
+        if (mainAudioPlayer) {
+            mainAudioPlayer.pause();
+            mainAudioPlayer.currentTime = 0; // Tua về đầu (tùy chọn)
+        }
+        
+        // 2. Ẩn thanh player (bằng cách xóa class active)
+        if (musicPlayerBar) {
+            musicPlayerBar.classList.remove('active');
+        }
+    });
+}

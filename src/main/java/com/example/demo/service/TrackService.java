@@ -12,4 +12,5 @@ public interface TrackService {
     List<Track> getTracksByArtist(String artistId) throws ExecutionException, InterruptedException;
     Track uploadTrack(MultipartFile file, MultipartFile coverImage, String title, String artistId, String artistName) throws IOException, ExecutionException, InterruptedException;
     void deleteTrack(String trackId, String artistId) throws ExecutionException, InterruptedException, IOException;
+    void updateTrackTitle(String trackId, String artistId, String newTitle) throws ExecutionException, InterruptedException;
 }
