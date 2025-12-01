@@ -493,3 +493,49 @@ nav ul {
   transform: scale(1.1);
   transition: all 0.2s;
 }
+
+/* Thêm vào cuối file style.css */
+
+/* Tiêu đề phân mục kết quả */
+.section-title {
+  width: 100%;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 30px 0 15px 0;
+  padding-left: 10px;
+  border-left: 4px solid #f50;
+  color: #333;
+}
+
+/* Style riêng cho thẻ Nghệ sĩ (User) */
+.badgeItem.artist-card {
+  text-align: center;
+}
+
+.badgeItem.artist-card img {
+  border-radius: 50%; /* Ảnh tròn */
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.badgeItem.artist-card .badgeItem__title {
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+/* Nút Theo dõi (giả lập) */
+.follow-btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 5px 15px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+.follow-btn:hover {
+  border-color: #333;
+}

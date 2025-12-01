@@ -371,16 +371,82 @@ async function requestDeleteTrack(trackId) {
 // ==========================================
 // 5. FETCH DATA
 // ==========================================
+// --- HÀM TÌM KIẾM MỚI (TÌM CẢ NGƯỜI VÀ BÀI HÁT) ---
 async function searchAndRender(query) {
-    const container = document.querySelector('.badgeList');
-    container.innerHTML = '<p style="text-align:center; padding:20px;">Đang tìm...</p>';
-    try {
-        const res = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        renderTrackList(data.results);
-    } catch (e) { console.error(e); container.innerHTML='<p>Lỗi.</p>'; }
-}
+    const trackListContainer = document.querySelector('.badgeList');
+    trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tìm kiếm...</p>';
+    
+    // Ẩn nút Load More khi đang tìm
+    const btn = document.getElementById('loadMoreContainer');
+    if(btn) btn.style.display = 'none';
 
+    try {
+        // 1. Gọi API tìm NGHỆ SĨ (Artist)
+        const artistRes = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}&type=musicArtist`);
+        const artistData = await artistRes.json();
+
+        // 2. Gọi API tìm BÀI HÁT (Song)
+        const songRes = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}&type=song`);
+        const songData = await songRes.json();
+
+        // 3. Tìm trong DB cục bộ (Local Tracks) - Lọc theo tên bài HOẶC tên người đăng
+        // (Lưu ý: Phần này giả định bạn đã loadSongs() từ trước và lưu vào biến nào đó, 
+        // hoặc gọi lại API. Để đơn giản, ta tìm từ biến toàn cục allTracks hoặc gọi API mới)
+        const localRes = await fetch('http://localhost:8080/api/tracks');
+        let localMatches = [];
+        if (localRes.ok) {
+            const allLocal = await localRes.json();
+            // Lọc bài hát trong DB có tên bài hoặc tên ca sĩ chứa từ khóa
+            localMatches = allLocal.filter(t => 
+                t.title.toLowerCase().includes(query.toLowerCase()) || 
+                t.artistName.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+
+        // --- BẮT ĐẦU VẼ GIAO DIỆN ---
+        trackListContainer.innerHTML = ''; 
+
+        // A. Hiển thị NGHỆ SĨ (Users)
+        if (artistData.results && artistData.results.length > 0) {
+            trackListContainer.insertAdjacentHTML('beforeend', '<div class="section-title">Nghệ sĩ & Users</div>');
+            
+            // Lấy tối đa 4 nghệ sĩ đầu tiên
+            artistData.results.slice(0, 4).forEach(artist => {
+                const html = `
+                    <div class="badgeItem artist-card">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(artist.artistName)}&background=random&size=200" alt="${artist.artistName}">
+                        <div class="badgeItem__info">
+                            <div class="badgeItem__title">${artist.artistName}</div>
+                            <div class="badgeItem__artist">${artist.primaryGenreName || 'Artist'}</div>
+                            <button class="follow-btn">Theo dõi</button>
+                        </div>
+                    </div>
+                `;
+                trackListContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // B. Hiển thị BÀI HÁT (Tracks) - Gộp cả Local và iTunes
+        const totalTracks = [...localMatches, ...(songData.results || [])];
+
+        if (totalTracks.length > 0) {
+            trackListContainer.insertAdjacentHTML('beforeend', '<div class="section-title" style="width:100%">Bài hát</div>');
+            
+            // Lưu vào biến toàn cục để dùng cho chức năng Load More nếu muốn
+            allTracks = totalTracks;
+            currentIndex = 0;
+            
+            // Gọi hàm showMoreSongs để vẽ danh sách bài hát (dùng lại hàm cũ của bạn)
+            showMoreSongs();
+        } else if (!artistData.results || artistData.results.length === 0) {
+            trackListContainer.innerHTML = '<p style="text-align:center">Không tìm thấy kết quả nào.</p>';
+        }
+
+    } catch (error) {
+        console.error("Lỗi tìm kiếm:", error);
+        trackListContainer.innerHTML = '<p style="color:red; text-align:center">Có lỗi xảy ra.</p>';
+    }
+}
 async function loadTrending() {
     document.querySelector('.trendingTracks').scrollIntoView({behavior:'smooth'});
     const container = document.querySelector('.badgeList');
