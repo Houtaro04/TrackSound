@@ -60,21 +60,25 @@
 </section>
 
 <section class="trendingTracks">
-  <div class="badgeList">
-      </div>
+    
+    <div class="genre-scroll-container">
+        <div class="genre-wrapper" id="genreList">
+            <button class="genre-chip active" onclick="switchGenre('All')">Tất cả</button>
+             <button class="genre-chip" onclick="switchGenre('V-pop')">V-pop</button>
+             <button class="genre-chip" onclick="switchGenre('K-pop')">K-pop</button>
+             <button class="genre-chip" onclick="switchGenre('US-UK')">US-UK</button>
+             <button class="genre-chip" onclick="switchGenre('Rock')">Rock</button>
+             <button class="genre-chip" onclick="switchGenre('Jazz')">Jazz</button>
+             <button class="genre-chip" onclick="switchGenre('Lofi')">Lofi</button>
+             <button class="genre-chip" onclick="switchGenre('Rap')">Rap / Hip-hop</button>
+             <button class="genre-chip" onclick="switchGenre('EDM')">EDM</button>
+        </div>
+    </div>
 
-  <div id="loadMoreContainer" style="text-align: center; margin-top: 20px; display: none;">
-      <button onclick="showMoreSongs()" class="sc-button sc-button-cta sc-button-loadmore">
-        Xem thêm
-      </button>
-  </div>
-  
-  <div style="text-align: center; margin-top: 40px;">
-      <button onclick="loadTrending()" class="sc-button sc-button-large sc-button-cta sc-button-primary" style="cursor: pointer;">
-        Explore trending playlists
-      </button>
-  </div>
-</section>
+    <div class="badgeList" style="margin-top: 20px;">
+        </div>
+
+    </section>
 
 <footer>
   <div style="max-width:1400px;margin:auto;">

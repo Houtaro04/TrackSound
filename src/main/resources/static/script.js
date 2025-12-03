@@ -1,15 +1,32 @@
-console.log("Script đang khởi động...");
+console.log("Script đang khởi động... (Search: iTunes | Genre: Deezer Hybrid)");
 
 // ==========================================
 // 1. CẤU HÌNH & BIẾN TOÀN CỤC
 // ==========================================
 const carousel = document.getElementById('carousel');
 let carouselIndex = 1;
-let allTracks = [];       
-let currentIndex = 0;      
-const ITEMS_PER_PAGE = 12; 
+let allTracks = []; 
 
-// Carousel tự động chạy
+/* CẤU HÌNH NGUỒN NHẠC CHO CÁC NÚT THỂ LOẠI
+   - V-pop/K-pop: Dùng iTunes Top Charts (để không bị sai nhạc như Deezer)
+   - Còn lại: Dùng Deezer Charts (vì Deezer phân loại Rock/Jazz/EDM rất tốt)
+*/
+const GENRE_CONFIG = {
+    // --- NHẠC QUỐC TẾ (Dùng Deezer) ---
+    'All':      { source: 'deezer', type: 'chart', id: 0 },
+    'Tất cả':   { source: 'deezer', type: 'chart', id: 0 },
+    'US-UK':    { source: 'deezer', type: 'playlist', id: 1282483245 }, 
+    'Rock':     { source: 'deezer', type: 'chart', id: 152 },
+    'Jazz':     { source: 'deezer', type: 'chart', id: 129 },
+    'EDM':      { source: 'deezer', type: 'chart', id: 113 },
+    'Rap / Hip-hop': { source: 'deezer', type: 'chart', id: 116 },
+    'Lofi':     { source: 'deezer', type: 'search', query: 'lofi beats' },
+
+    // --- NHẠC Á (Dùng iTunes Top Charts cho chuẩn) ---
+    'V-pop':    { source: 'itunes_top', store: 'vn' }, 
+    'K-pop':    { source: 'itunes_top', store: 'kr' } 
+};
+
 if (carousel) {
     setInterval(() => {
         carouselIndex = (carouselIndex + 1) % 3;
@@ -31,7 +48,40 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 // ==========================================
-// 2. GIAO DIỆN USER
+// 2. HÀM HỖ TRỢ GỌI API
+// ==========================================
+
+// Deezer JSONP (Dùng cho Thể loại)
+function fetchDeezerJSONP(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = 'deezer_cb_' + Math.round(100000 * Math.random());
+        window[callbackName] = function(data) {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            resolve(data);
+        };
+        const script = document.createElement('script');
+        const separator = url.indexOf('?') >= 0 ? '&' : '?';
+        script.src = url + separator + 'output=jsonp&callback=' + callbackName;
+        script.onerror = (e) => {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            reject(e);
+        };
+        document.body.appendChild(script);
+    });
+}
+
+// iTunes Top Charts RSS (Dùng cho nút V-pop/K-pop)
+async function fetchItunesTop(store = 'vn') {
+    const url = `https://itunes.apple.com/${store}/rss/topsongs/limit=100/json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('iTunes Feed Error');
+    return await res.json();
+}
+
+// ==========================================
+// 3. GIAO DIỆN USER
 // ==========================================
 const signInButton = document.getElementById('signInBtn');
 const createAccountButton = document.getElementById('createAccountBtn');
@@ -41,7 +91,6 @@ function updateUIForLoggedInUser(user) {
     if (!headerRight) return;
     headerRight.innerHTML = ''; 
 
-    // Nút Upload
     const uploadBtn = document.createElement('div');
     uploadBtn.className = 'uploadButton';
     uploadBtn.textContent = 'Upload';
@@ -52,7 +101,6 @@ function updateUIForLoggedInUser(user) {
         if (modal) modal.style.display = 'flex';
     };
 
-    // User Profile
     const userProfile = document.createElement('div');
     userProfile.className = 'user-profile';
     const userAvatar = document.createElement('img');
@@ -94,15 +142,12 @@ function createMenuItem(text, onClick) {
     return item;
 }
 
-// Auth Listener
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        console.log("Người dùng đã đăng nhập:", user);
-        //Ẩn Carousel
         const heroSection = document.querySelector('.frontHero');
         if (heroSection) heroSection.style.display = 'none';
+        
         const idToken = await user.getIdToken();
-        //Gọi backend để đồng bộ session
         const response = await fetch('/api/auth/google-login', {
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
@@ -136,7 +181,7 @@ window.onclick = (e) => {
 };
 
 // ==========================================
-// 3. LOGIC UPLOAD FILE
+// 4. LOGIC UPLOAD
 // ==========================================
 const modalAudioInput = document.getElementById('modalAudioInput'); 
 const modalCoverInput = document.getElementById('modalCoverInput'); 
@@ -148,7 +193,6 @@ const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 const uploadModal = document.getElementById('uploadModal');
 const loadingScreen = document.getElementById('uploadLoading');
 
-// A. Chọn nhạc -> Hiện nghe thử
 if (modalAudioInput) {
     modalAudioInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -162,7 +206,6 @@ if (modalAudioInput) {
     });
 }
 
-// B. Chọn ảnh -> Hiện xem trước
 if (modalCoverInput) {
     modalCoverInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -173,7 +216,6 @@ if (modalCoverInput) {
     });
 }
 
-// C. Nút Hủy
 if (cancelUploadBtn) {
     cancelUploadBtn.addEventListener('click', () => {
         uploadModal.style.display = 'none';
@@ -185,17 +227,13 @@ if (cancelUploadBtn) {
     });
 }
 
-// D. Nút XÁC NHẬN
 if (confirmUploadBtn) {
     confirmUploadBtn.addEventListener('click', async () => {
         const audioFile = modalAudioInput.files[0];
         const coverFile = modalCoverInput.files[0];
         const title = uploadTitleInput.value.trim();
 
-        if (!audioFile) {
-            alert("Vui lòng chọn file nhạc!"); return;
-        }
-
+        if (!audioFile) { alert("Vui lòng chọn file nhạc!"); return; }
         const user = firebase.auth().currentUser;
         if (!user) { alert("Cần đăng nhập!"); return; }
 
@@ -207,14 +245,11 @@ if (confirmUploadBtn) {
         formData.append("title", title || audioFile.name);
         formData.append("artistId", user.uid);
         formData.append("artistName", user.displayName || "Unknown");
-        if (coverFile) {
-            formData.append("coverImage", coverFile);
-        }
+        if (coverFile) formData.append("coverImage", coverFile);
 
         try {
             const res = await fetch('http://localhost:8080/api/tracks/upload', {
-                method: 'POST',
-                body: formData
+                method: 'POST', body: formData
             });
 
             if (res.ok) {
@@ -239,13 +274,221 @@ if (confirmUploadBtn) {
 }
 
 // ==========================================
-// 4. PLAYER & HIỂN THỊ LIST NHẠC (ĐÃ SỬA LỖI ĐỎ)
+// 5. LOGIC CHUYỂN ĐỔI THỂ LOẠI (DÙNG GENRE CONFIG)
 // ==========================================
+
+async function switchGenre(genreName) {
+    document.querySelectorAll('.genre-chip').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText === genreName) btn.classList.add('active');
+    });
+
+    const trackListContainer = document.querySelector('.badgeList');
+    const config = GENRE_CONFIG[genreName] || GENRE_CONFIG['All'];
+    const sourceName = config.source === 'itunes_top' ? 'Apple Music Top Charts' : 'Deezer';
+    
+    trackListContainer.innerHTML = `<p style="text-align:center; padding:40px; width:100%;">Đang tải nhạc ${genreName} từ ${sourceName}...</p>`;
+
+    try {
+        let tracks = [];
+
+        // === NGUỒN ITUNES TOP CHARTS (Cho V-pop, K-pop) ===
+        if (config.source === 'itunes_top') {
+            const data = await fetchItunesTop(config.store);
+            const entries = data.feed.entry || [];
+            
+            tracks = entries.map(entry => {
+                const images = entry['im:image'];
+                let imgUrl = images[images.length - 1].label;
+                imgUrl = imgUrl.replace(/\/\d+x\d+bb/, "/600x600bb");
+
+                return {
+                    id: entry.id.attributes['im:id'],
+                    title: entry['im:name'].label,
+                    artistName: entry['im:artist'].label,
+                    coverUrl: imgUrl,
+                    fileUrl: entry.link[1].attributes.href,
+                    artistId: 'itunes_artist'
+                };
+            });
+
+        } 
+        // === NGUỒN DEEZER (Cho nhạc Tây & Các thể loại còn lại) ===
+        else {
+            let deezerUrl = '';
+            let limit = 200; 
+
+            if (config.type === 'chart') {
+                deezerUrl = `https://api.deezer.com/chart/${config.id}/tracks?limit=${limit}`;
+            } else if (config.type === 'playlist') {
+                deezerUrl = `https://api.deezer.com/playlist/${config.id}/tracks?limit=${limit}`;
+            } else if (config.type === 'search') {
+                deezerUrl = `https://api.deezer.com/search?q=${encodeURIComponent(config.query)}&limit=${limit}`;
+            }
+
+            const data = await fetchDeezerJSONP(deezerUrl);
+            let rawTracks = [];
+            if (data.data) rawTracks = data.data;
+            else if (data.tracks && data.tracks.data) rawTracks = data.tracks.data;
+
+            tracks = rawTracks.map(t => ({
+                id: t.id,
+                title: t.title,
+                artistName: t.artist ? t.artist.name : "Unknown",
+                coverUrl: t.album ? (t.album.cover_xl || t.album.cover_medium) : 'https://via.placeholder.com/300',
+                fileUrl: t.preview,
+                artistId: 'deezer_artist'
+            }));
+        }
+
+        renderGenreTracks(tracks);
+
+    } catch (e) {
+        console.error("Lỗi tải nhạc:", e);
+        trackListContainer.innerHTML = '<p style="text-align:center; width:100%;">Lỗi kết nối. Vui lòng thử lại.</p>';
+    }
+}
+
+// ==========================================
+// 6. LOGIC TÌM KIẾM (DÙNG ITUNES SEARCH API)
+// ==========================================
+
+async function searchAndRender(query) {
+    const trackListContainer = document.querySelector('.badgeList');
+    // Bỏ active của các nút thể loại
+    document.querySelectorAll('.genre-chip').forEach(btn => btn.classList.remove('active'));
+    trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tìm kiếm trong kho nhạc và iTunes...</p>';
+
+    const lowerQuery = query.toLowerCase();
+
+    try {
+        // --- BƯỚC 1: TÌM TRONG LOCAL (Nhạc bạn Upload) ---
+        const localPromise = fetch('http://localhost:8080/api/tracks').then(async res => {
+            if (!res.ok) return [];
+            const allLocal = await res.json();
+            
+            // Lọc nhạc Local
+            return allLocal.filter(t => {
+                const titleMatch = t.title && t.title.toLowerCase().includes(lowerQuery);
+                const artistMatch = t.artistName && t.artistName.toLowerCase().includes(lowerQuery);
+                return titleMatch || artistMatch;
+            }).map(t => ({
+                id: t.id,
+                title: t.title,
+                artistName: t.artistName || "Unknown",
+                coverUrl: t.coverUrl || 'https://via.placeholder.com/300',
+                fileUrl: t.fileUrl,
+                artistId: t.artistId 
+            }));
+        }).catch(e => {
+            console.error("Lỗi tìm kiếm Local:", e);
+            return [];
+        });
+
+        // --- BƯỚC 2: TÌM TRÊN ITUNES API (Thay vì Deezer) ---
+        // iTunes Search API rất mạnh khoản tìm tiếng Việt và tên nghệ sĩ
+        const itunesPromise = fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=50&media=music&entity=song`)
+            .then(res => res.json())
+            .then(data => {
+                return (data.results || []).map(t => ({
+                    id: t.trackId,
+                    title: t.trackName,
+                    artistName: t.artistName,
+                    // Hack lấy ảnh chất lượng cao 600x600 từ link 100x100
+                    coverUrl: t.artworkUrl100 ? t.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/300',
+                    fileUrl: t.previewUrl,
+                    artistId: 'itunes_artist'
+                }));
+            })
+            .catch(e => {
+                console.error("Lỗi tìm kiếm iTunes:", e);
+                return [];
+            });
+
+        // --- BƯỚC 3: GỘP KẾT QUẢ (LOCAL LÊN TRƯỚC) ---
+        const [localTracks, itunesTracks] = await Promise.all([localPromise, itunesPromise]);
+        
+        const combinedTracks = [...localTracks, ...itunesTracks];
+
+        if (combinedTracks.length === 0) {
+            trackListContainer.innerHTML = `<p style="text-align:center; padding:20px;">Không tìm thấy bài hát nào cho từ khóa "${query}".</p>`;
+        } else {
+            renderGenreTracks(combinedTracks);
+        }
+
+    } catch (error) {
+        console.error("Lỗi hệ thống tìm kiếm:", error);
+        trackListContainer.innerHTML = '<p style="color:red; text-align:center">Có lỗi xảy ra khi tìm kiếm.</p>';
+    }
+}
+
+// ==========================================
+// 7. RENDER & PLAYER
+// ==========================================
+
+function renderGenreTracks(tracks) {
+    const trackListContainer = document.querySelector('.badgeList');
+    trackListContainer.innerHTML = ''; 
+
+    if (!tracks || tracks.length === 0) {
+        trackListContainer.innerHTML = '<p style="text-align:center; width:100%;">Không tìm thấy bài hát nào.</p>';
+        return;
+    }
+
+    allTracks = tracks; 
+    
+    tracks.forEach(track => {
+        let image = track.coverUrl;
+        let title = track.title;
+        let artist = track.artistName;
+        let audioUrl = track.fileUrl;
+        
+        let isOwner = false;
+        // Kiểm tra quyền (chỉ áp dụng cho nhạc Local)
+        if (firebase.auth().currentUser && track.artistId !== 'deezer_artist' && track.artistId !== 'itunes_artist') {
+            isOwner = (track.artistId === firebase.auth().currentUser.uid);
+        }
+
+        const sTitle = title ? title.replace(/'/g, "\\'") : "";
+        const sArtist = artist ? artist.replace(/'/g, "\\'") : "";
+
+        let optionsHTML = '';
+        if (isOwner) {
+             optionsHTML = `
+                <div class="track-options">
+                    <button class="track-options-btn" onclick="event.stopPropagation(); toggleTrackMenu('${track.id}')">⋮</button>
+                    <div id="menu-${track.id}" class="track-options-menu">
+                        <div class="track-options-item" onclick="event.stopPropagation(); requestEditTitle('${track.id}', '${sTitle}')">✎ Sửa tên</div>
+                        <div class="track-options-item" onclick="event.stopPropagation(); requestDeleteTrack('${track.id}')" style="color:red;">🗑 Xóa nhạc</div>
+                    </div>
+                </div>`;
+        }
+
+        const html = `
+            <div class="badgeItem" style="position: relative;">
+              ${optionsHTML}
+              <div class="image-container" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="position:relative; cursor:pointer;">
+                  <img src="${image}" alt="${title}" onerror="this.src='https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'">
+                  <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#f50; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+                      <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
+              </div>
+              <div class="badgeItem__info">
+                <div class="badgeItem__title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${title}">${title}</div>
+                <div class="badgeItem__artist" style="${isOwner ? 'color:orangered; font-weight:bold' : ''}">
+                    ${artist} ${isOwner ? '(Tôi)' : ''}
+                </div>
+                <button class="sc-button-cta sc-button-loadmore" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="display:block; width:100%; margin-top:10px; padding:8px;">Phát Ngay</button>
+              </div>
+            </div>`;
+        
+        trackListContainer.insertAdjacentHTML('beforeend', html);
+    });
+}
+
 function playNow(url, title, artist, image) {
-    // Nếu chưa đăng nhập -> Hàm checkAuthAndRedirect sẽ mở popup và trả về false -> Dừng lại.
     if (!checkAuthAndRedirect()) return;
     
-    // Sửa lỗi: Kiểm tra xem các phần tử có tồn tại không trước khi gán
     const playerBar = document.getElementById('musicPlayer');
     const pImg = document.getElementById('playerImg');
     const pTitle = document.getElementById('playerTitle');
@@ -263,90 +506,39 @@ function playNow(url, title, artist, image) {
     if (playerBar) playerBar.classList.add('active');
 }
 
-function renderTrackList(tracks) {
-    const trackListContainer = document.querySelector('.badgeList');
-    const loadMoreContainer = document.getElementById('loadMoreContainer');
-    trackListContainer.innerHTML = ''; 
-    allTracks = tracks || [];
-    currentIndex = 0;
-
-    if (allTracks.length === 0) {
-        trackListContainer.innerHTML = '<p style="text-align:center">Không tìm thấy bài hát nào.</p>';
-        if(loadMoreContainer) loadMoreContainer.style.display = 'none';
-        return;
-    }
-    showMoreSongs();
-}
-
-function showMoreSongs() {
-    const trackListContainer = document.querySelector('.badgeList');
-    const loadMoreContainer = document.getElementById('loadMoreContainer');
-    const nextBatch = allTracks.slice(currentIndex, currentIndex + ITEMS_PER_PAGE);
-
-    nextBatch.forEach(track => {
-        let image = track.coverUrl || (track.artworkUrl100 ? track.artworkUrl100.replace('100x100', '600x600') : 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300');
-        let title = track.title || track.trackName;
-        let artist = track.artistName;
-        let audioUrl = track.fileUrl || track.previewUrl;
+async function loadMyProfile(user) {
+    document.querySelector('.frontHero').style.display = 'none';
+    const title = document.querySelector('.trendingTracks__title');
+    if(title) { title.textContent = `Hồ sơ của: ${user.name}`; title.style.textAlign = 'center'; }
+    
+    const container = document.querySelector('.badgeList');
+    container.innerHTML = '<p style="text-align:center; padding:20px;">Loading Profile...</p>';
+    
+    try {
+        const res = await fetch(`http://localhost:8080/api/tracks/artist/${user.uid}`);
+        if(!res.ok) { container.innerHTML='<p>Chưa có bài nào.</p>'; return; }
+        const myTracks = await res.json();
         
-        // Kiểm tra xem bài hát có phải của mình không
-        let isOwner = false;
-        if (firebase.auth().currentUser && track.artistId) {
-            isOwner = (track.artistId === firebase.auth().currentUser.uid);
-        }
+        const normalized = myTracks.map(t => ({
+            id: t.id,
+            title: t.title,
+            artistName: t.artistName,
+            coverUrl: t.coverUrl,
+            fileUrl: t.fileUrl,
+            artistId: t.artistId
+        }));
 
-        const sTitle = title ? title.replace(/'/g, "\\'") : "";
-        const sArtist = artist ? artist.replace(/'/g, "\\'") : "";
-
-        // --- TẠO MENU 3 CHẤM (CHỈ HIỆN KHI LÀ CHỦ SỞ HỮU) ---
-        let optionsHTML = '';
-        if (isOwner) {
-            optionsHTML = `
-                <div class="track-options">
-                    <button class="track-options-btn" onclick="event.stopPropagation(); toggleTrackMenu('${track.id}')">
-                        ⋮
-                    </button>
-                    <div id="menu-${track.id}" class="track-options-menu">
-                        <div class="track-options-item" onclick="event.stopPropagation(); requestEditTitle('${track.id}', '${sTitle}')">
-                            ✎ Sửa tên
-                        </div>
-                        <div class="track-options-item" onclick="event.stopPropagation(); requestDeleteTrack('${track.id}')" style="color:red;">
-                            🗑 Xóa nhạc
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        const html = `
-            <div class="badgeItem" style="position: relative;">
-              ${optionsHTML}
-
-              <div class="image-container" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="position:relative; cursor:pointer;">
-                  <img src="${image}" alt="${title}" onerror="this.src='https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'">
-                  <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#f50; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-                      <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
-                  </div>
-              </div>
-              <div class="badgeItem__info">
-                <div class="badgeItem__title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
-                <div class="badgeItem__artist" style="${isOwner ? 'color:orangered; font-weight:bold' : ''}">
-                    ${artist} ${isOwner ? '(Tôi)' : ''}
-                </div>
-                <button class="sc-button-cta sc-button-loadmore" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="display:block; width:100%; margin-top:10px; padding:8px;">Phát Ngay</button>
-              </div>
-            </div>`;
-        trackListContainer.insertAdjacentHTML('beforeend', html);
-    });
-
-    currentIndex += nextBatch.length;
-    if (loadMoreContainer) loadMoreContainer.style.display = (currentIndex >= allTracks.length) ? 'none' : 'block';
+        renderGenreTracks(normalized); 
+        
+    } catch (e) { console.error(e); }
 }
 
-// --- HÀM XỬ LÝ XÓA BÀI HÁT (MỚI) ---
+// ==========================================
+// 8. TIỆN ÍCH & KHỞI TẠO
+// ==========================================
+
 async function requestDeleteTrack(trackId) {
     if (!confirm("Bạn có chắc chắn muốn xóa bài hát này không?")) return;
-
     const user = firebase.auth().currentUser;
     if (!user) { alert("Vui lòng đăng nhập lại."); return; }
 
@@ -354,292 +546,104 @@ async function requestDeleteTrack(trackId) {
         const response = await fetch(`http://localhost:8080/api/tracks/${trackId}?artistId=${user.uid}`, {
             method: 'DELETE'
         });
-
         if (response.ok) {
             alert("Đã xóa bài hát!");
-            loadMyProfile(user); // Tải lại danh sách
+            loadMyProfile(user); 
         } else {
             const txt = await response.text();
             alert("Lỗi khi xóa: " + txt);
         }
-    } catch (error) {
-        console.error("Lỗi xóa:", error);
-        alert("Lỗi kết nối đến server.");
-    }
+    } catch (error) { console.error("Lỗi xóa:", error); alert("Lỗi kết nối đến server."); }
 }
 
-// ==========================================
-// 5. FETCH DATA
-// ==========================================
-// --- HÀM TÌM KIẾM MỚI (TÌM CẢ NGƯỜI VÀ BÀI HÁT) ---
-async function searchAndRender(query) {
-    const trackListContainer = document.querySelector('.badgeList');
-    trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tìm kiếm...</p>';
-    
-    // Ẩn nút Load More khi đang tìm
-    const btn = document.getElementById('loadMoreContainer');
-    if(btn) btn.style.display = 'none';
-
-    try {
-        // 1. Gọi API tìm NGHỆ SĨ (Artist)
-        const artistRes = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}&type=musicArtist`);
-        const artistData = await artistRes.json();
-
-        // 2. Gọi API tìm BÀI HÁT (Song)
-        const songRes = await fetch(`http://localhost:8080/api/rapid/search?q=${encodeURIComponent(query)}&type=song`);
-        const songData = await songRes.json();
-
-        // 3. Tìm trong DB cục bộ (Local Tracks) - Lọc theo tên bài HOẶC tên người đăng
-        // (Lưu ý: Phần này giả định bạn đã loadSongs() từ trước và lưu vào biến nào đó, 
-        // hoặc gọi lại API. Để đơn giản, ta tìm từ biến toàn cục allTracks hoặc gọi API mới)
-        const localRes = await fetch('http://localhost:8080/api/tracks');
-        let localMatches = [];
-        if (localRes.ok) {
-            const allLocal = await localRes.json();
-            // Lọc bài hát trong DB có tên bài hoặc tên ca sĩ chứa từ khóa
-            localMatches = allLocal.filter(t => 
-                t.title.toLowerCase().includes(query.toLowerCase()) || 
-                t.artistName.toLowerCase().includes(query.toLowerCase())
-            );
-        }
-
-        // --- BẮT ĐẦU VẼ GIAO DIỆN ---
-        trackListContainer.innerHTML = ''; 
-
-        // A. Hiển thị NGHỆ SĨ (Users)
-        if (artistData.results && artistData.results.length > 0) {
-            trackListContainer.insertAdjacentHTML('beforeend', '<div class="section-title">Nghệ sĩ & Users</div>');
-            
-            // Lấy tối đa 4 nghệ sĩ đầu tiên
-            artistData.results.slice(0, 4).forEach(artist => {
-                const html = `
-                    <div class="badgeItem artist-card">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(artist.artistName)}&background=random&size=200" alt="${artist.artistName}">
-                        <div class="badgeItem__info">
-                            <div class="badgeItem__title">${artist.artistName}</div>
-                            <div class="badgeItem__artist">${artist.primaryGenreName || 'Artist'}</div>
-                            <button class="follow-btn">Theo dõi</button>
-                        </div>
-                    </div>
-                `;
-                trackListContainer.insertAdjacentHTML('beforeend', html);
-            });
-        }
-
-        // B. Hiển thị BÀI HÁT (Tracks) - Gộp cả Local và iTunes
-        const totalTracks = [...localMatches, ...(songData.results || [])];
-
-        if (totalTracks.length > 0) {
-            trackListContainer.insertAdjacentHTML('beforeend', '<div class="section-title" style="width:100%">Bài hát</div>');
-            
-            // Lưu vào biến toàn cục để dùng cho chức năng Load More nếu muốn
-            allTracks = totalTracks;
-            currentIndex = 0;
-            
-            // Gọi hàm showMoreSongs để vẽ danh sách bài hát (dùng lại hàm cũ của bạn)
-            showMoreSongs();
-        } else if (!artistData.results || artistData.results.length === 0) {
-            trackListContainer.innerHTML = '<p style="text-align:center">Không tìm thấy kết quả nào.</p>';
-        }
-
-    } catch (error) {
-        console.error("Lỗi tìm kiếm:", error);
-        trackListContainer.innerHTML = '<p style="color:red; text-align:center">Có lỗi xảy ra.</p>';
-    }
-}
-async function loadTrending() {
-    document.querySelector('.trendingTracks').scrollIntoView({behavior:'smooth'});
-    const container = document.querySelector('.badgeList');
-    container.innerHTML = '<p style="text-align:center; padding:20px;">Loading Trending...</p>';
-    try {
-        const res = await fetch('http://localhost:8080/api/rapid/trending');
-        const data = await res.json();
-        renderTrackList(data.results);
-    } catch (e) { console.error(e); }
-}
-
-async function loadSongs() {
-    try {
-        const res = await fetch('http://localhost:8080/api/tracks');
-        if (!res.ok || res.status === 204) return;
-        const text = await res.text();
-        if (text) renderTrackList(JSON.parse(text));
-    } catch (e) { console.error(e); }
-}
-loadSongs();
-
-async function loadMyProfile(user) {
-    document.querySelector('.frontHero').style.display = 'none';
-    const title = document.querySelector('.trendingTracks__title');
-    if(title) { title.textContent = `Hồ sơ của: ${user.name}`; title.style.textAlign = 'center'; }
-    const container = document.querySelector('.badgeList');
-    container.innerHTML = '<p style="text-align:center; padding:20px;">Loading Profile...</p>';
-    try {
-        const res = await fetch(`http://localhost:8080/api/tracks/artist/${user.uid}`);
-        if(!res.ok) { container.innerHTML='<p>Chưa có bài nào.</p>'; return; }
-        const myTracks = await res.json();
-        renderTrackList(myTracks);
-    } catch (e) { console.error(e); }
-}
-
-const sForm = document.querySelector('.headerSearch');
-if(sForm) sForm.addEventListener('submit', (e) => { e.preventDefault(); const v=document.querySelector('.headerSearch__input').value; if(v.trim()) searchAndRender(v); });
-
-// --- XỬ LÝ MENU 3 CHẤM ---
-
-// 1. Bật/Tắt Menu
-function toggleTrackMenu(trackId) {
-    // Đóng tất cả menu khác đang mở
-    document.querySelectorAll('.track-options-menu').forEach(menu => {
-        if (menu.id !== `menu-${trackId}`) menu.classList.remove('show');
-    });
-    
-    // Toggle menu hiện tại
-    const menu = document.getElementById(`menu-${trackId}`);
-    if (menu) menu.classList.toggle('show');
-}
-
-// 2. Đóng menu khi click ra ngoài
-window.addEventListener('click', () => {
-    document.querySelectorAll('.track-options-menu').forEach(menu => {
-        menu.classList.remove('show');
-    });
-});
-
-// 3. Hàm Sửa Tên Bài Hát
 async function requestEditTitle(trackId, oldTitle) {
     const user = firebase.auth().currentUser;
     if (!user) return;
-
     const newTitle = prompt("Nhập tên mới cho bài hát:", oldTitle);
     
     if (newTitle && newTitle.trim() !== "" && newTitle !== oldTitle) {
         try {
-            // Gọi API Update (PUT)
             const response = await fetch(`http://localhost:8080/api/tracks/${trackId}?artistId=${user.uid}&newTitle=${encodeURIComponent(newTitle)}`, {
                 method: 'PUT'
             });
-
             if (response.ok) {
                 alert("Đổi tên thành công!");
-                loadMyProfile(user); // Load lại để thấy tên mới
+                loadMyProfile(user); 
             } else {
                 alert("Lỗi đổi tên: " + await response.text());
             }
-        } catch (e) {
-            console.error(e);
-            alert("Lỗi mạng.");
-        }
+        } catch (e) { console.error(e); alert("Lỗi mạng."); }
     }
 }
 
-// --- HÀM KIỂM TRA ĐĂNG NHẬP ---
 function checkAuthAndRedirect() {
     const user = firebase.auth().currentUser;
     if (!user) {
-        // Nếu chưa đăng nhập -> Gọi hàm đăng nhập Google
         signInWithGoogle(); 
-        return false; // Chặn hành động tiếp theo
+        return false;
     }
-    return true; // Cho phép đi tiếp
+    return true;
 }
 
-// --- XỬ LÝ TÌM KIẾM (CÓ CHẶN ĐĂNG NHẬP) ---
-const searchForm = document.querySelector('.headerSearch');
-if (searchForm) {
-    searchForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); 
-        
-        // 1. Kiểm tra đăng nhập ngay lập tức
-        if (!checkAuthAndRedirect()) return; 
+const sForm = document.querySelector('.headerSearch');
+if(sForm) sForm.addEventListener('submit', (e) => { 
+    e.preventDefault(); 
+    if (!checkAuthAndRedirect()) return;
+    const v = document.querySelector('.headerSearch__input').value; 
+    if(v.trim()) searchAndRender(v); 
+});
 
-        // 2. Nếu đã đăng nhập thì mới chạy tiếp
-        const keyword = document.querySelector('.headerSearch__input').value;
-        if (keyword.trim()) await searchAndRender(keyword);
-    });
-}
-
-// --- CHẶN CÁC NÚT KHI CHƯA ĐĂNG NHẬP ---
-
-// 1. Chặn nút Upload trên Header (Nút tĩnh lúc chưa login)
 const staticUploadBtn = document.querySelector('a.uploadButton');
 if (staticUploadBtn) {
     staticUploadBtn.addEventListener('click', (e) => {
-        e.preventDefault(); // Không cho chuyển trang
+        e.preventDefault(); 
         if (checkAuthAndRedirect()) {
-            // Nếu tình cờ đã login mà nút chưa đổi (hiếm gặp), thì mở popup upload
             const modal = document.getElementById('uploadModal');
             if (modal) modal.style.display = 'flex';
         }
     });
 }
 
-// ==========================================
-// XỬ LÝ SỰ KIỆN CÁC NÚT CHỨC NĂNG
-// ==========================================
+function toggleTrackMenu(trackId) {
+    document.querySelectorAll('.track-options-menu').forEach(menu => {
+        if (menu.id !== `menu-${trackId}`) menu.classList.remove('show');
+    });
+    const menu = document.getElementById(`menu-${trackId}`);
+    if (menu) menu.classList.toggle('show');
+}
+window.addEventListener('click', () => {
+    document.querySelectorAll('.track-options-menu').forEach(menu => menu.classList.remove('show'));
+});
+
+const closePlayerBtn = document.getElementById('closePlayerBtn');
+if (closePlayerBtn) {
+    closePlayerBtn.addEventListener('click', () => {
+        const mainAudioPlayer = document.getElementById('mainAudio');
+        if (mainAudioPlayer) {
+            mainAudioPlayer.pause();
+            mainAudioPlayer.currentTime = 0;
+        }
+        const musicPlayerBar = document.getElementById('musicPlayer');
+        if (musicPlayerBar) musicPlayerBar.classList.remove('active');
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. Xử lý nút "Explore trending playlists"
-    // Tìm nút nằm trong section .trendingTracks
-    const exploreTrendingBtn = document.querySelector('.trendingTracks button');
-    
-    if (exploreTrendingBtn) {
-        // Gỡ bỏ onclick cũ trong HTML (nếu có) để tránh xung đột
-        exploreTrendingBtn.onclick = null; 
-        
-        exploreTrendingBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Kiểm tra đăng nhập
-            if (checkAuthAndRedirect()) {
-                // Nếu đã đăng nhập thì gọi hàm load nhạc
-                if (typeof loadTrending === 'function') {
-                    loadTrending();
-                }
-            }
-        });
-    }
-
-    // 2. Xử lý các nút trên Banner (Get Started, Upload, Explore Go+)
     const heroButtons = document.querySelectorAll('.frontHero .sc-button');
-    
     heroButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            
-            // Bấm vào là bắt đăng nhập ngay
             if (checkAuthAndRedirect()) {
-                // Nếu đã đăng nhập rồi thì có thể scroll xuống hoặc mở upload
-                // Ví dụ: Bấm nút Upload ở banner thì mở popup upload
                 if (btn.textContent.includes('Upload')) {
                     const modal = document.getElementById('uploadModal');
                     if (modal) modal.style.display = 'flex';
                 } else {
-                    // Các nút khác thì cuộn xuống danh sách nhạc
                     document.querySelector('.trendingTracks').scrollIntoView({ behavior: 'smooth' });
                 }
             }
         });
     });
+
+    // MẶC ĐỊNH: Load "Tất cả" (Deezer Chart)
+    switchGenre('All');
 });
-
-// --- XỬ LÝ NÚT ĐÓNG PLAYER ---
-const closePlayerBtn = document.getElementById('closePlayerBtn');
-const musicPlayerBar = document.getElementById('musicPlayer');
-const mainAudioPlayer = document.getElementById('mainAudio');
-
-if (closePlayerBtn) {
-    closePlayerBtn.addEventListener('click', () => {
-        // 1. Dừng nhạc
-        if (mainAudioPlayer) {
-            mainAudioPlayer.pause();
-            mainAudioPlayer.currentTime = 0; // Tua về đầu (tùy chọn)
-        }
-        
-        // 2. Ẩn thanh player (bằng cách xóa class active)
-        if (musicPlayerBar) {
-            musicPlayerBar.classList.remove('active');
-        }
-    });
-}

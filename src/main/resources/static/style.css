@@ -38,7 +38,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px; /* Tạo khoảng cách an toàn giữa Logo, Nav, Search, và User */
+  gap: 20px;
 }
 .header__logo a {
   display: flex;
@@ -46,15 +46,14 @@ header {
   font-weight: 900;
   font-size: 28px;
   color: var(--orange);
-  flex-shrink: 0; /* Logo không bao giờ bị méo */
+  flex-shrink: 0;
 }
 .header__logo svg { width:140px; height:40px; fill:currentColor; margin-right:8px; }
 nav ul { list-style:none; display:flex; gap:32px; margin:0; padding:0; }
 nav a { font-weight:500; color:var(--black); font-size:15px; }
-.headerSearch {
-  position:relative;
-  width:420px;
-}
+nav { flex-shrink: 0; }
+
+.headerSearch { position:relative; width:420px; }
 .headerSearch__input {
   width:100%;
   padding:10px 44px 10px 16px;
@@ -74,149 +73,24 @@ nav a { font-weight:500; color:var(--black); font-size:15px; }
 }
 .headerSearch__submit svg { width:20px; height:20px; fill:#999; }
 
-.header__right button {
-  padding:8px 20px;
-  border-radius:4px;
-  font-weight:600;
-  cursor:pointer;
-}
-
-/* --- PHẦN ĐÃ SỬA ĐỂ CĂN HÀNG NGANG --- */
-.header__right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0; /* Giữ nguyên kích thước nút bấm */
-}
-/* ------------------------------------- */
+.header__right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.header__right button { padding:8px 20px; border-radius:4px; font-weight:600; cursor:pointer; white-space: nowrap; }
 
 .sc-button-tertiary { background:none; border:1px solid var(--grey-300); color:#333; }
 .sc-button-cta { background:var(--orange); color:#fff; border:none; }
-
-.uploadButton { color:var(--orange); font-weight:600; padding: 0 10px; }
+.uploadButton { color:var(--orange); font-weight:600; padding: 0 10px; white-space: nowrap; }
 
 /* User Profile Styles */
-.header__right .user-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-}
-.header__right .user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.header__right .user-name {
-  font-weight: 500;
-}
+.header__right .user-profile { position: relative; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.header__right .user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.header__right .user-name { font-weight: 500; }
 
-/* Hero Carousel */
-.frontHero {
-  position:relative;
-  height:80vh;
-  min-height:600px;
-  background:#000;
-  color:#fff;
-  overflow:hidden;
-}
-.frontHero__carousel {
-  display:flex;
-  width:400%;
-  height:100%;
-  transition:transform .6s ease-in-out;
-}
-.frontHeroSlide__container {
-  width:25%;
-  height:100%;
-  background-size:cover;
-  background-position:center top;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  padding:80px 120px;
-}
-.frontHeroSlide__title { font-size:72px; font-weight:900; line-height:1; margin-bottom:24px; }
-.frontHeroSlide__copy { font-size:28px; line-height:1.3; margin-bottom:40px; opacity:0.9; }
-.sc-button-large { padding:16px 40px; font-size:18px; font-weight:600; border-radius:40px; }
-
-/* Dots */
-.frontHero__carouselNav {
-  position:absolute;
-  bottom:40px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:12px;
-}
-.frontHero__carouselNavDot {
-  width:10px;
-  height:10px;
-  border-radius:50%;
-  background:rgba(255,255,255,.4);
-  transition:.3s;
-}
-.frontHero__carouselNavDot[style*="rgb(255, 255, 255)"] { background:#fff; }
-
-/* Trending */
-.trendingTracks { padding:80px 24px; text-align:center; background:#fff; }
-.trendingTracks__title { font-size:42px; font-weight:300; margin-bottom:60px; }
-.badgeList { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:60px; }
-.badgeItem {
-  width:300px;
-  background:#f9f9f9;
-  border-radius:8px;
-  overflow:hidden;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-.badgeItem img { width:100%; height:300px; object-fit:cover; }
-.badgeItem__info { padding:16px; text-align:left; }
-.badgeItem__title { font-weight:600; font-size:18px; margin-bottom:8px; }
-.badgeItem__artist { color:#999; }
-
-/* Mobile teaser */
-.frontMobileTeaser {
-  display:flex;
-  align-items:center;
-  padding:120px 24px;
-  background:#f9f9f9;
-}
-.frontMobileTeaser__info { flex:1; padding-right:80px; }
-.frontMobileTeaser__info h2 { font-size:48px; font-weight:300; margin-bottom:24px; }
-.frontMobileTeaser__links a {
-  display:inline-block;
-  margin-right:16px;
-  background:#000;
-  color:#fff;
-  padding:12px 24px;
-  border-radius:8px;
-  font-weight:600;
-}
-
-/* Footer */
-footer {
-  padding:80px 24px 40px;
-  background:#181818;
-  color:#b3b3b3;
-  font-size:14px;
-}
-footer a { color:#b3b3b3; margin-right:16px; }
-.footer__localeSelector { margin-top:40px; }
-
-/* --- PHẦN DROPDOWN USER (MỚI THÊM) --- */
-
-/* Đảm bảo container user-profile có vị trí relative để menu con định vị theo nó */
-.header__right .user-profile {
-  position: relative; 
-}
-
-/* Menu dropdown mặc định sẽ ẩn */
+/* Dropdown Menu */
 .dropdown-menu {
-  display: none; /* Ẩn mặc định */
+  display: none;
   position: absolute;
-  top: 110%; /* Nằm ngay dưới avatar, cách 1 xíu */
-  right: 0;  /* Căn phải thẳng hàng với avatar */
+  top: 110%;
+  right: 0;
   background: #fff;
   min-width: 150px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -225,317 +99,186 @@ footer a { color:#b3b3b3; margin-right:16px; }
   border: 1px solid #eee;
   z-index: 1001;
 }
-
-/* Class này được JS thêm vào để hiện menu */
-.dropdown-menu.active {
-  display: block;
-}
-
-/* Các mục trong menu */
+.dropdown-menu.active { display: block; }
 .dropdown-item {
-  display: block;
-  padding: 12px 16px;
-  color: #333;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  text-decoration: none; /* Bỏ gạch chân nếu là thẻ a */
+  display: block; padding: 12px 16px; color: #333; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background 0.2s;
 }
+.dropdown-item:hover { background-color: #f2f2f2; color: #f50; }
+.dropdown-divider { height: 1px; background-color: #eee; margin: 0; }
 
-.dropdown-item:hover {
-  background-color: #f2f2f2;
-  color: #f50; /* Màu cam khi hover */
+/* Hero Carousel */
+.frontHero { position:relative; height:80vh; min-height:600px; background:#000; color:#fff; overflow:hidden; }
+.frontHero__carousel { display:flex; width:400%; height:100%; transition:transform .6s ease-in-out; }
+.frontHeroSlide__container {
+  width:25%; height:100%; background-size:cover; background-position:center top;
+  display:flex; flex-direction:column; justify-content:flex-end; padding:80px 120px;
 }
+.frontHeroSlide__title { font-size:72px; font-weight:900; line-height:1; margin-bottom:24px; }
+.frontHeroSlide__copy { font-size:28px; line-height:1.3; margin-bottom:40px; opacity:0.9; }
+.sc-button-large { padding:16px 40px; font-size:18px; font-weight:600; border-radius:40px; }
 
-/* Đường kẻ ngang phân cách nếu cần */
-.dropdown-divider {
-  height: 1px;
-  background-color: #eee;
-  margin: 0;
+/* Dots */
+.frontHero__carouselNav {
+  position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:12px;
 }
+.frontHero__carouselNavDot {
+  width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,.4); transition:.3s;
+}
+.frontHero__carouselNavDot[style*="rgb(255, 255, 255)"] { background:#fff; }
 
-/* 3. Navigation (Home, Feed...): Sẽ ẩn đi khi màn hình quá nhỏ */
-nav {
-  flex-shrink: 0; /* Không co menu */
-}
-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 32px;
-  margin: 0;
-  padding: 0;
-}
+/* Trending & List */
+.trendingTracks { padding:80px 24px; text-align:center; background:#fff; }
+.trendingTracks__title { font-size:42px; font-weight:300; margin-bottom:60px; }
 
-.header__right button, 
-.uploadButton {
-  white-space: nowrap; /* Chữ luôn nằm trên 1 dòng */
-}
-
-/* --- MUSIC PLAYER BAR (Thanh phát nhạc dưới đáy) --- */
-.music-player {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff; /* Hoặc màu #181818 nếu thích giao diện tối */
-  border-top: 1px solid #e5e5e5;
-  padding: 10px 24px;
-  z-index: 2000;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  transform: translateY(100%); /* Mặc định ẩn xuống dưới */
-  transition: transform 0.3s ease-out;
-}
-
-/* Class này được thêm vào bằng JS để hiện thanh nhạc lên */
-.music-player.active {
-  transform: translateY(0); 
-}
-
-.music-player__inner {
-  max-width: 1400px;
-  margin: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.music-player__info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 300px; /* Độ rộng cố định cho phần thông tin */
-}
-
-.music-player__info img {
-  width: 50px;
-  height: 50px;
-  border-radius: 4px;
-  object-fit: cover;
-  background: #eee;
-}
-
-.music-player__title {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.music-player__artist {
-  font-size: 12px;
-  color: #999;
-}
-
-.music-player__controls {
-  flex: 1; /* Chiếm hết khoảng trống còn lại */
-  max-width: 600px;
-}
-
-/* Responsive cho mobile */
-@media (max-width: 700px) {
-  .music-player__inner {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .music-player__info {
+/* --- [MỚI] THANH MENU THỂ LOẠI (GENRE SCROLL) --- */
+.genre-scroll-container {
     width: 100%;
-    margin-bottom: 10px;
-  }
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 10px 0;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
 }
+.genre-scroll-container::-webkit-scrollbar { display: none; }
+.genre-wrapper { display: inline-flex; gap: 10px; padding: 0 10px; }
+.genre-chip {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background-color: white;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+.genre-chip:hover { background-color: #f5f5f5; border-color: #ccc; }
+.genre-chip.active { background-color: #ff5500; color: white; border-color: #ff5500; }
+/* ------------------------------------------------ */
 
-/* --- CSS CHO NÚT XEM THÊM --- */
+.badgeList { display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:60px; }
+.badgeItem {
+  width:300px; background:#f9f9f9; border-radius:8px; overflow:hidden;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+.badgeItem img { width:100%; height:300px; object-fit:cover; }
+.badgeItem__info { padding:16px; text-align:left; }
+.badgeItem__title { font-weight:600; font-size:18px; margin-bottom:8px; }
+.badgeItem__artist { color:#999; }
+
+/* --- STYLE NÚT CHUNG (Dùng cho nút Phát Ngay trong thẻ) --- */
 .sc-button-loadmore {
-  background: orangered; /* Màu cam chủ đạo (giống SoundCloud) */
+  background: orangered;
   color: white;
-  border: none; /* Bỏ viền xám cũ */
-  padding: 12px 32px; /* Tăng kích thước nút */
+  border: none;
+  padding: 12px 32px;
   font-size: 16px;
   font-weight: 600;
-  border-radius: 30px; /* Bo tròn nhiều hơn cho hiện đại */
+  border-radius: 30px;
   cursor: pointer;
-  transition: all 0.2s ease-in-out; /* Hiệu ứng chuyển đổi mượt mà */
-  box-shadow: 0 4px 10px rgba(255, 69, 0, 0.3); /* Bóng đổ màu cam nhẹ */
-  outline: none; /* Bỏ đường viền khi bấm tab */
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 10px rgba(255, 69, 0, 0.3);
+  outline: none;
 }
-
-/* Hiệu ứng khi di chuột vào (Hover) */
 .sc-button-loadmore:hover {
-  background: #e03e00; /* Màu cam đậm hơn một chút */
-  transform: translateY(-2px); /* Nút nổi lên nhẹ */
-  box-shadow: 0 6px 15px rgba(255, 69, 0, 0.4); /* Bóng đổ đậm hơn */
+  background: #e03e00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 69, 0, 0.4);
 }
-
-/* Hiệu ứng khi bấm xuống (Active) */
 .sc-button-loadmore:active {
-  transform: translateY(1px); /* Nút lún xuống nhẹ tạo cảm giác bấm thật */
-  box-shadow: 0 2px 5px rgba(255, 69, 0, 0.3); /* Bóng đổ nhỏ lại */
+  transform: translateY(1px);
+  box-shadow: 0 2px 5px rgba(255, 69, 0, 0.3);
 }
 
-/* Style cho Modal Upload */
+/* Footer */
+.frontMobileTeaser { display:flex; align-items:center; padding:120px 24px; background:#f9f9f9; }
+.frontMobileTeaser__info { flex:1; padding-right:80px; }
+.frontMobileTeaser__info h2 { font-size:48px; font-weight:300; margin-bottom:24px; }
+.frontMobileTeaser__links a {
+  display:inline-block; margin-right:16px; background:#000; color:#fff;
+  padding:12px 24px; border-radius:8px; font-weight:600;
+}
+footer { padding:80px 24px 40px; background:#181818; color:#b3b3b3; font-size:14px; }
+footer a { color:#b3b3b3; margin-right:16px; }
+.footer__localeSelector { margin-top:40px; }
+
+/* Music Player Bar */
+.music-player {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; border-top: 1px solid #e5e5e5;
+  padding: 10px 24px; z-index: 2000;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  transform: translateY(100%); transition: transform 0.3s ease-out;
+}
+.music-player.active { transform: translateY(0); }
+.music-player__inner {
+  max-width: 1400px; margin: auto; display: flex; align-items: center;
+  justify-content: space-between; gap: 20px;
+}
+.music-player__info { display: flex; align-items: center; gap: 12px; width: 300px; }
+.music-player__info img { width: 50px; height: 50px; border-radius: 4px; object-fit: cover; background: #eee; }
+.music-player__title { font-weight: 600; font-size: 14px; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.music-player__artist { font-size: 12px; color: #999; }
+.music-player__controls { flex: 1; max-width: 600px; }
+
+#closePlayerBtn:hover { background: #f50 !important; transform: scale(1.1); transition: all 0.2s; }
+
+@media (max-width: 700px) {
+  .music-player__inner { flex-direction: column; align-items: stretch; }
+  .music-player__info { width: 100%; margin-bottom: 10px; }
+}
+
+/* Modal Upload */
 .upload-modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6); /* Nền tối mờ */
-    z-index: 3000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(5px); /* Làm mờ nền sau */
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); z-index: 3000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(5px);
 }
-
 .upload-modal__content {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    width: 500px;
-    max-width: 90%;
+    background: white; padding: 30px; border-radius: 8px;
+    width: 500px; max-width: 90%;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     animation: slideDown 0.3s ease-out;
 }
+.sc-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px; font-size: 14px; }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-.sc-input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-top: 5px;
-    font-size: 14px;
-}
-
-@keyframes slideDown {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* --- MENU 3 CHẤM (OPTIONS) --- */
-.track-options {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10; /* Nằm trên ảnh */
-}
-
-/* Nút 3 chấm */
+/* Menu 3 chấm */
+.track-options { position: absolute; top: 10px; right: 10px; z-index: 10; }
 .track-options-btn {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 18px;
-  transition: 0.2s;
-  opacity: 0; /* Mặc định ẩn cho gọn */
+  background: rgba(0, 0, 0, 0.6); color: white; border: none;
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 18px; transition: 0.2s; opacity: 0;
 }
-
-/* Hiện nút 3 chấm khi di chuột vào bài hát */
-.badgeItem:hover .track-options-btn {
-  opacity: 1;
-}
-
-.track-options-btn:hover {
-  background: #f50;
-}
-
-/* Menu xổ xuống */
+.badgeItem:hover .track-options-btn { opacity: 1; }
+.track-options-btn:hover { background: #f50; }
 .track-options-menu {
-  position: absolute;
-  top: 35px;
-  right: 0;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  width: 120px;
-  display: none; /* Mặc định ẩn */
-  overflow: hidden;
+  position: absolute; top: 35px; right: 0; background: white;
+  border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  width: 120px; display: none; overflow: hidden;
 }
+.track-options-menu.show { display: block; }
+.track-options-item { padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; border-bottom: 1px solid #eee; text-align: left; }
+.track-options-item:hover { background: #f2f2f2; color: #f50; }
 
-.track-options-menu.show {
-  display: block;
-}
-
-.track-options-item {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-}
-
-.track-options-item:hover {
-  background: #f2f2f2;
-  color: #f50;
-}
-
-/* Trong style.css */
-
-.music-player {
-  /* ... các thuộc tính cũ ... */
-  /* Thêm dòng này để nút đóng định vị theo thanh player */
-  position: fixed; 
-  /* ... */
-}
-
-/* Hiệu ứng khi di chuột vào nút đóng */
-#closePlayerBtn:hover {
-  background: #f50 !important; /* Đổi màu cam khi hover */
-  transform: scale(1.1);
-  transition: all 0.2s;
-}
-
-/* Thêm vào cuối file style.css */
-
-/* Tiêu đề phân mục kết quả */
+/* Khác */
 .section-title {
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  margin: 30px 0 15px 0;
-  padding-left: 10px;
-  border-left: 4px solid #f50;
-  color: #333;
+  width: 100%; font-size: 20px; font-weight: 700; margin: 30px 0 15px 0;
+  padding-left: 10px; border-left: 4px solid #f50; color: #333;
 }
-
-/* Style riêng cho thẻ Nghệ sĩ (User) */
-.badgeItem.artist-card {
-  text-align: center;
-}
-
+.badgeItem.artist-card { text-align: center; }
 .badgeItem.artist-card img {
-  border-radius: 50%; /* Ảnh tròn */
-  width: 180px;
-  height: 180px;
-  object-fit: cover;
-  margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 50%; width: 180px; height: 180px; object-fit: cover;
+  margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-
-.badgeItem.artist-card .badgeItem__title {
-  margin-top: 10px;
-  font-size: 16px;
-}
-
-/* Nút Theo dõi (giả lập) */
+.badgeItem.artist-card .badgeItem__title { margin-top: 10px; font-size: 16px; }
 .follow-btn {
-  border: 1px solid #ccc;
-  background: #fff;
-  padding: 5px 15px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  margin-top: 5px;
+  border: 1px solid #ccc; background: #fff; padding: 5px 15px;
+  border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 5px;
 }
-.follow-btn:hover {
-  border-color: #333;
-}
+.follow-btn:hover { border-color: #333; }

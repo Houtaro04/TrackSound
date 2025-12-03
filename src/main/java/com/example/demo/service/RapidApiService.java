@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 public class RapidApiService {
 
     // URL gốc, bỏ phần params đi để tự ghép
-    private final String ITUNES_BASE_URL = "https://itunes.apple.com/search?media=music&limit=10";
+    private final String ITUNES_BASE_URL = "https://api.deezer.com/search?";
 
     // Hàm search linh hoạt: tìm bài hát (song) hoặc nghệ sĩ (musicArtist)
     public String searchContent(String query, String entityType) {
