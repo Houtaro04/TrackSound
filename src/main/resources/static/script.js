@@ -1,30 +1,25 @@
-console.log("Script đang khởi động... (Search: iTunes | Genre: Deezer Hybrid)");
+console.log("Script đang khởi động... (Search: iTunes | Genre: Deezer Hybrid) - FIX BY GEMINI");
 
 // ==========================================
 // 1. CẤU HÌNH & BIẾN TOÀN CỤC
 // ==========================================
 const carousel = document.getElementById('carousel');
 let carouselIndex = 1;
+// Biến này cực kỳ quan trọng, dùng để lưu danh sách bài hát hiện tại để tra cứu ID
 let allTracks = []; 
 
-/* CẤU HÌNH NGUỒN NHẠC CHO CÁC NÚT THỂ LOẠI
-   - V-pop/K-pop: Dùng iTunes Top Charts (để không bị sai nhạc như Deezer)
-   - Còn lại: Dùng Deezer Charts (vì Deezer phân loại Rock/Jazz/EDM rất tốt)
-*/
+/* CẤU HÌNH NGUỒN NHẠC CHO CÁC NÚT THỂ LOẠI */
 const GENRE_CONFIG = {
-    // --- NHẠC QUỐC TẾ (Dùng Deezer) ---
-    'All':      { source: 'deezer', type: 'chart', id: 0 },
-    'Tất cả':   { source: 'deezer', type: 'chart', id: 0 },
-    'US-UK':    { source: 'deezer', type: 'playlist', id: 1282483245 }, 
-    'Rock':     { source: 'deezer', type: 'chart', id: 152 },
-    'Jazz':     { source: 'deezer', type: 'chart', id: 129 },
-    'EDM':      { source: 'deezer', type: 'chart', id: 113 },
+    'All':          { source: 'deezer', type: 'chart', id: 0 },
+    'Tất cả':       { source: 'deezer', type: 'chart', id: 0 },
+    'US-UK':        { source: 'deezer', type: 'playlist', id: 1282483245 }, 
+    'Rock':         { source: 'deezer', type: 'chart', id: 152 },
+    'Jazz':         { source: 'deezer', type: 'chart', id: 129 },
+    'EDM':          { source: 'deezer', type: 'chart', id: 113 },
     'Rap / Hip-hop': { source: 'deezer', type: 'chart', id: 116 },
-    'Lofi':     { source: 'deezer', type: 'search', query: 'lofi beats' },
-
-    // --- NHẠC Á (Dùng iTunes Top Charts cho chuẩn) ---
-    'V-pop':    { source: 'itunes_top', store: 'vn' }, 
-    'K-pop':    { source: 'itunes_top', store: 'kr' } 
+    'Lofi':         { source: 'deezer', type: 'search', query: 'lofi beats' },
+    'V-pop':        { source: 'itunes_top', store: 'vn' }, 
+    'K-pop':        { source: 'itunes_top', store: 'kr' } 
 };
 
 if (carousel) {
@@ -51,7 +46,6 @@ const auth = firebase.auth();
 // 2. HÀM HỖ TRỢ GỌI API
 // ==========================================
 
-// Deezer JSONP (Dùng cho Thể loại)
 function fetchDeezerJSONP(url) {
     return new Promise((resolve, reject) => {
         const callbackName = 'deezer_cb_' + Math.round(100000 * Math.random());
@@ -72,7 +66,6 @@ function fetchDeezerJSONP(url) {
     });
 }
 
-// iTunes Top Charts RSS (Dùng cho nút V-pop/K-pop)
 async function fetchItunesTop(store = 'vn') {
     const url = `https://itunes.apple.com/${store}/rss/topsongs/limit=100/json`;
     const res = await fetch(url);
@@ -274,7 +267,7 @@ if (confirmUploadBtn) {
 }
 
 // ==========================================
-// 5. LOGIC CHUYỂN ĐỔI THỂ LOẠI (DÙNG GENRE CONFIG)
+// 5. LOGIC CHUYỂN ĐỔI THỂ LOẠI
 // ==========================================
 
 async function switchGenre(genreName) {
@@ -292,7 +285,7 @@ async function switchGenre(genreName) {
     try {
         let tracks = [];
 
-        // === NGUỒN ITUNES TOP CHARTS (Cho V-pop, K-pop) ===
+        // === NGUỒN ITUNES TOP CHARTS ===
         if (config.source === 'itunes_top') {
             const data = await fetchItunesTop(config.store);
             const entries = data.feed.entry || [];
@@ -313,7 +306,7 @@ async function switchGenre(genreName) {
             });
 
         } 
-        // === NGUỒN DEEZER (Cho nhạc Tây & Các thể loại còn lại) ===
+        // === NGUỒN DEEZER ===
         else {
             let deezerUrl = '';
             let limit = 200; 
@@ -350,24 +343,21 @@ async function switchGenre(genreName) {
 }
 
 // ==========================================
-// 6. LOGIC TÌM KIẾM (DÙNG ITUNES SEARCH API)
+// 6. LOGIC TÌM KIẾM
 // ==========================================
 
 async function searchAndRender(query) {
     const trackListContainer = document.querySelector('.badgeList');
-    // Bỏ active của các nút thể loại
     document.querySelectorAll('.genre-chip').forEach(btn => btn.classList.remove('active'));
     trackListContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Đang tìm kiếm trong kho nhạc và iTunes...</p>';
 
     const lowerQuery = query.toLowerCase();
 
     try {
-        // --- BƯỚC 1: TÌM TRONG LOCAL (Nhạc bạn Upload) ---
+        // --- TÌM TRONG LOCAL ---
         const localPromise = fetch('http://localhost:8080/api/tracks').then(async res => {
             if (!res.ok) return [];
             const allLocal = await res.json();
-            
-            // Lọc nhạc Local
             return allLocal.filter(t => {
                 const titleMatch = t.title && t.title.toLowerCase().includes(lowerQuery);
                 const artistMatch = t.artistName && t.artistName.toLowerCase().includes(lowerQuery);
@@ -385,8 +375,7 @@ async function searchAndRender(query) {
             return [];
         });
 
-        // --- BƯỚC 2: TÌM TRÊN ITUNES API (Thay vì Deezer) ---
-        // iTunes Search API rất mạnh khoản tìm tiếng Việt và tên nghệ sĩ
+        // --- TÌM TRÊN ITUNES API ---
         const itunesPromise = fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=50&media=music&entity=song`)
             .then(res => res.json())
             .then(data => {
@@ -394,7 +383,6 @@ async function searchAndRender(query) {
                     id: t.trackId,
                     title: t.trackName,
                     artistName: t.artistName,
-                    // Hack lấy ảnh chất lượng cao 600x600 từ link 100x100
                     coverUrl: t.artworkUrl100 ? t.artworkUrl100.replace('100x100', '600x600') : 'https://via.placeholder.com/300',
                     fileUrl: t.previewUrl,
                     artistId: 'itunes_artist'
@@ -405,9 +393,7 @@ async function searchAndRender(query) {
                 return [];
             });
 
-        // --- BƯỚC 3: GỘP KẾT QUẢ (LOCAL LÊN TRƯỚC) ---
         const [localTracks, itunesTracks] = await Promise.all([localPromise, itunesPromise]);
-        
         const combinedTracks = [...localTracks, ...itunesTracks];
 
         if (combinedTracks.length === 0) {
@@ -423,7 +409,7 @@ async function searchAndRender(query) {
 }
 
 // ==========================================
-// 7. RENDER & PLAYER
+// 7. RENDER & PLAYER (ĐÃ SỬA LỖI)
 // ==========================================
 
 function renderGenreTracks(tracks) {
@@ -435,39 +421,43 @@ function renderGenreTracks(tracks) {
         return;
     }
 
+    // Cập nhật biến toàn cục để hàm playTrackById có dữ liệu
     allTracks = tracks; 
     
     tracks.forEach(track => {
         let image = track.coverUrl;
         let title = track.title;
         let artist = track.artistName;
-        let audioUrl = track.fileUrl;
-        
+        // LẤY ID ĐỂ DÙNG CHO NÚT PLAY (An toàn hơn dùng chuỗi)
+        let trackId = track.id; 
+
         let isOwner = false;
-        // Kiểm tra quyền (chỉ áp dụng cho nhạc Local)
         if (firebase.auth().currentUser && track.artistId !== 'deezer_artist' && track.artistId !== 'itunes_artist') {
             isOwner = (track.artistId === firebase.auth().currentUser.uid);
         }
 
+        // Biến này chỉ dùng cho MENU EDIT/DELETE (Vẫn giữ logic replace cũ cho menu)
         const sTitle = title ? title.replace(/'/g, "\\'") : "";
-        const sArtist = artist ? artist.replace(/'/g, "\\'") : "";
 
         let optionsHTML = '';
         if (isOwner) {
              optionsHTML = `
                 <div class="track-options">
-                    <button class="track-options-btn" onclick="event.stopPropagation(); toggleTrackMenu('${track.id}')">⋮</button>
-                    <div id="menu-${track.id}" class="track-options-menu">
-                        <div class="track-options-item" onclick="event.stopPropagation(); requestEditTitle('${track.id}', '${sTitle}')">✎ Sửa tên</div>
-                        <div class="track-options-item" onclick="event.stopPropagation(); requestDeleteTrack('${track.id}')" style="color:red;">🗑 Xóa nhạc</div>
+                    <button class="track-options-btn" onclick="event.stopPropagation(); toggleTrackMenu('${trackId}')">⋮</button>
+                    <div id="menu-${trackId}" class="track-options-menu">
+                        <div class="track-options-item" onclick="event.stopPropagation(); requestEditTitle('${trackId}', '${sTitle}')">✎ Sửa tên</div>
+                        <div class="track-options-item" onclick="event.stopPropagation(); requestDeleteTrack('${trackId}')" style="color:red;">🗑 Xóa nhạc</div>
                     </div>
                 </div>`;
         }
 
+        // --- KHẮC PHỤC LỖI Ở ĐÂY ---
+        // Thay vì dùng playNow(....) truyền cả đống string
+        // Chúng ta dùng playTrackById('${trackId}') -> ID không bao giờ có ký tự đặc biệt gây lỗi
         const html = `
             <div class="badgeItem" style="position: relative;">
               ${optionsHTML}
-              <div class="image-container" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="position:relative; cursor:pointer;">
+              <div class="image-container" onclick="playTrackById('${trackId}')" style="position:relative; cursor:pointer;">
                   <img src="${image}" alt="${title}" onerror="this.src='https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'">
                   <div class="play-overlay" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#f50; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
                       <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>
@@ -478,12 +468,26 @@ function renderGenreTracks(tracks) {
                 <div class="badgeItem__artist" style="${isOwner ? 'color:orangered; font-weight:bold' : ''}">
                     ${artist} ${isOwner ? '(Tôi)' : ''}
                 </div>
-                <button class="sc-button-cta sc-button-loadmore" onclick="playNow('${audioUrl}', '${sTitle}', '${sArtist}', '${image}')" style="display:block; width:100%; margin-top:10px; padding:8px;">Phát Ngay</button>
+                <button class="sc-button-cta sc-button-loadmore" onclick="playTrackById('${trackId}')" style="display:block; width:100%; margin-top:10px; padding:8px;">Phát Ngay</button>
               </div>
             </div>`;
         
         trackListContainer.insertAdjacentHTML('beforeend', html);
     });
+}
+
+// --- HÀM MỚI: TÌM BÀI HÁT THEO ID VÀ PHÁT ---
+function playTrackById(trackId) {
+    // Tìm bài hát trong danh sách đang hiển thị (allTracks)
+    // Dùng t.id == trackId để so sánh linh hoạt (số hoặc chuỗi đều được)
+    const track = allTracks.find(t => t.id == trackId);
+    
+    if (track) {
+        // Gọi lại hàm playNow cũ với dữ liệu sạch lấy từ bộ nhớ
+        playNow(track.fileUrl, track.title, track.artistName, track.coverUrl);
+    } else {
+        console.error("Không tìm thấy bài hát có ID:", trackId);
+    }
 }
 
 function playNow(url, title, artist, image) {

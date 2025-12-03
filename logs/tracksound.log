@@ -390,3 +390,37 @@ Caused by: java.lang.Error: Unresolved compilation problem:
 	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486) ~[na:na]
 	at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:195) ~[spring-beans-6.1.10.jar:6.1.10]
 	... 36 common frames omitted
+2025-12-03 11:39:50.953 [restartedMain] INFO  com.example.demo.DemoApplication - Starting DemoApplication using Java 21.0.8 with PID 10108 (E:\Workspace\SoundTrack\TrackSound\target\classes started by Viet Anh in E:\Workspace\SoundTrack\TrackSound)
+2025-12-03 11:39:50.953 [restartedMain] INFO  com.example.demo.DemoApplication - No active profile set, falling back to 1 default profile: "default"
+2025-12-03 11:39:51.090 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-12-03 11:39:51.090 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-03 11:39:51.090 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.25]
+2025-12-03 11:39:51.112 [restartedMain] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+2025-12-03 11:39:51.112 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 158 ms
+2025-12-03 11:39:51.133 [restartedMain] WARN  c.e.demo.firebase.FirebaseConfig - Firebase has already been initialized.
+2025-12-03 11:39:51.145 [restartedMain] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2025-12-03 11:39:51.180 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2025-12-03 11:39:51.190 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/api'
+2025-12-03 11:39:51.194 [restartedMain] INFO  com.example.demo.DemoApplication - Started DemoApplication in 0.263 seconds (process running for 3042.465)
+2025-12-03 11:39:51.195 [restartedMain] INFO  o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2025-12-03 11:40:20.215 [http-nio-8080-exec-2] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-03 11:40:20.215 [http-nio-8080-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-12-03 11:40:20.215 [http-nio-8080-exec-2] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-12-03 13:44:21.324 [restartedMain] INFO  com.example.demo.DemoApplication - Starting DemoApplication using Java 21.0.8 with PID 17864 (E:\Workspace\SoundTrack\TrackSound\target\classes started by Viet Anh in E:\Workspace\SoundTrack\TrackSound)
+2025-12-03 13:44:21.327 [restartedMain] INFO  com.example.demo.DemoApplication - No active profile set, falling back to 1 default profile: "default"
+2025-12-03 13:44:21.394 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2025-12-03 13:44:21.394 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2025-12-03 13:44:22.731 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-12-03 13:44:22.750 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-12-03 13:44:22.750 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.25]
+2025-12-03 13:44:22.839 [restartedMain] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring embedded WebApplicationContext
+2025-12-03 13:44:22.839 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1445 ms
+2025-12-03 13:44:22.940 [restartedMain] INFO  c.e.demo.firebase.FirebaseConfig - Initializing Firebase with service account: tracksound-93a54-firebase-adminsdk-fbsvc-dfadf2c690.json
+2025-12-03 13:44:23.028 [restartedMain] INFO  c.e.demo.firebase.FirebaseConfig - >>> Firebase has been initialized successfully! <<<
+2025-12-03 13:44:23.098 [restartedMain] INFO  o.s.b.a.w.s.WelcomePageHandlerMapping - Adding welcome page: class path resource [static/index.html]
+2025-12-03 13:44:23.379 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2025-12-03 13:44:23.447 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/api'
+2025-12-03 13:44:23.455 [restartedMain] INFO  com.example.demo.DemoApplication - Started DemoApplication in 2.848 seconds (process running for 3.414)
+2025-12-03 13:44:33.207 [http-nio-8080-exec-1] INFO  o.a.c.c.C.[.[localhost].[/api] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-12-03 13:44:33.207 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-12-03 13:44:33.213 [http-nio-8080-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 6 ms
