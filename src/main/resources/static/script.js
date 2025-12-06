@@ -271,6 +271,11 @@ if (confirmUploadBtn) {
 // ==========================================
 
 async function switchGenre(genreName) {
+    const firstGenreBtn = document.querySelector('.genre-chip');
+    if (firstGenreBtn && firstGenreBtn.parentElement) {
+        firstGenreBtn.parentElement.style.display = 'block'; // Hoặc 'block' tùy CSS của bạn
+    }
+    
     document.querySelectorAll('.genre-chip').forEach(btn => {
         btn.classList.remove('active');
         if (btn.innerText === genreName) btn.classList.add('active');
@@ -280,7 +285,7 @@ async function switchGenre(genreName) {
     const config = GENRE_CONFIG[genreName] || GENRE_CONFIG['All'];
     const sourceName = config.source === 'itunes_top' ? 'Apple Music Top Charts' : 'Deezer';
     
-    trackListContainer.innerHTML = `<p style="text-align:center; padding:40px; width:100%;">Đang tải nhạc ${genreName} từ ${sourceName}...</p>`;
+    trackListContainer.innerHTML = `<p style="text-align:center; padding:40px; width:100%;">Đang tải nhạc ${genreName}...</p>`;
 
     try {
         let tracks = [];
@@ -451,9 +456,6 @@ function renderGenreTracks(tracks) {
                 </div>`;
         }
 
-        // --- KHẮC PHỤC LỖI Ở ĐÂY ---
-        // Thay vì dùng playNow(....) truyền cả đống string
-        // Chúng ta dùng playTrackById('${trackId}') -> ID không bao giờ có ký tự đặc biệt gây lỗi
         const html = `
             <div class="badgeItem" style="position: relative;">
               ${optionsHTML}
@@ -512,6 +514,13 @@ function playNow(url, title, artist, image) {
 
 async function loadMyProfile(user) {
     document.querySelector('.frontHero').style.display = 'none';
+
+    // Tìm phần tử cha chứa các nút .genre-chip và ẩn nó
+    const firstGenreBtn = document.querySelector('.genre-chip');
+    if (firstGenreBtn && firstGenreBtn.parentElement) {
+        firstGenreBtn.parentElement.style.display = 'none';
+    }
+
     const title = document.querySelector('.trendingTracks__title');
     if(title) { title.textContent = `Hồ sơ của: ${user.name}`; title.style.textAlign = 'center'; }
     
